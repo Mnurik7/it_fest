@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация - AI Help Desk{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-box">
+        <div class="auth-header">
+            <div class="auth-icon">✨</div>
+            <h1>Регистрация пользователя</h1>
+            <p class="auth-description">Создайте аккаунт для отправки обращений</p>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span class="alert-icon">
+                            {% if category == 'success' %}✅
+                            {% elif category == 'error' %}❌
+                            {% elif category == 'warning' %}⚠️
+                            {% else %}ℹ️{% endif %}
+                        </span>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('register') }}" class="auth-form">
+            <div class="form-group">
+                <label for="username">
+                    <span class="label-icon">👤</span>
+                    Имя пользователя
+                </label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    required 
+                    autofocus
+                    placeholder="Минимум 3 символа"
+                    minlength="3"
+                    class="form-input"
+                >
+                <small class="form-hint">Будет использоваться для входа в систему</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">
+                    <span class="label-icon">📧</span>
+                    Email
+                </label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required
+                    placeholder="example@email.com"
+                    class="form-input"
+                >
+                <small class="form-hint">Для уведомлений и связи</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">
+                    <span class="label-icon">🔒</span>
+                    Пароль
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    required
+                    placeholder="Минимум 6 символов"
+                    minlength="6"
+                    class="form-input"
+                >
+                <small class="form-hint">Используйте надёжный пароль</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="password_confirm">
+                    <span class="label-icon">🔐</span>
+                    Подтвердите пароль
+                </label>
+                <input 
+                    type="password" 
+                    id="password_confirm" 
+                    name="password_confirm" 
+                    required
+                    placeholder="Повторите пароль"
+                    minlength="6"
+                    class="form-input"
+                >
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block btn-auth">
+                <span class="btn-icon">📝</span>
+                <span>Зарегистрироваться</span>
+            </button>
+        </form>
+        
+        <div class="auth-divider">
+            <span>или</span>
+        </div>
+        
+        <div class="auth-links">
+            <div class="auth-link-item">
+                <span class="link-icon">🔐</span>
+                <div>
+                    <p class="link-text">Уже есть аккаунт?</p>
+                    <a href="{{ url_for('login') }}" class="auth-link-btn">Войти в систему</a>
+                </div>
+            </div>
+            
+            <div class="auth-link-item">
+                <span class="link-icon">📞</span>
+                <div>
+                    <p class="link-text">Вы оператор?</p>
+                    <a href="{{ url_for('register_operator') }}" class="auth-link-btn auth-link-btn-operator">Регистрация оператора</a>
+                </div>
+            </div>
+            
+            <div class="auth-link-item">
+                <span class="link-icon">🔧</span>
+                <div>
+                    <p class="link-text">Вы специалист?</p>
+                    <a href="{{ url_for('register_specialist') }}" class="auth-link-btn auth-link-btn-specialist">Регистрация специалиста</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

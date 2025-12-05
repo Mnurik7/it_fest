@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация - Казахтелеком{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card auth-card-wide">
+        <div class="auth-header">
+            <h1>Регистрация</h1>
+            <p>Заполните все поля для создания аккаунта</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('register') }}" class="auth-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="full_name">ФИО *</label>
+                    <input type="text" id="full_name" name="full_name" class="form-input" 
+                           placeholder="Иванов Иван Иванович" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Номер телефона *</label>
+                    <input type="tel" id="phone" name="phone" class="form-input" 
+                           placeholder="+7 (XXX) XXX-XX-XX" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="password">Пароль *</label>
+                    <input type="password" id="password" name="password" class="form-input" 
+                           placeholder="Минимум 6 символов" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="password_confirm">Подтверждение пароля *</label>
+                    <input type="password" id="password_confirm" name="password_confirm" class="form-input" 
+                           placeholder="Повторите пароль" required minlength="6">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="city">Город *</label>
+                    <input type="text" id="city" name="city" class="form-input" 
+                           placeholder="Алматы" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="street">Улица *</label>
+                    <input type="text" id="street" name="street" class="form-input" 
+                           placeholder="Абая" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="house_number">Номер дома *</label>
+                    <input type="text" id="house_number" name="house_number" class="form-input" 
+                           placeholder="12" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="contract_number">Номер договора (лицевой счет) *</label>
+                    <input type="text" id="contract_number" name="contract_number" class="form-input" 
+                           placeholder="KT123456" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Зарегистрироваться</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Уже есть аккаунт? <a href="{{ url_for('login') }}" class="link">Войти</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

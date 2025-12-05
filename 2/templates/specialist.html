@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+
+{% block title %}Панель специалиста - AI Help Desk{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Заголовок и информация о специалисте -->
+    <div class="specialist-header">
+        <div class="header-top">
+            <h1>🔧 Панель специалиста</h1>
+            <div class="operator-badge">
+                <span class="badge-icon">👤</span>
+                <div>
+                    <div class="operator-name">{{ session.get('username') }}</div>
+                    <div class="operator-dept">Отдел: <strong id="userDepartment">{{ user_department or 'Не указан' }}</strong></div>
+                </div>
+            </div>
+        </div>
+        <div class="info-banner">
+            <span class="info-icon">ℹ️</span>
+            <span>Здесь отображаются обращения, назначенные на ваш отдел. Вы можете работать со сложными обращениями, требующими экспертных знаний.</span>
+        </div>
+    </div>
+    
+    <!-- Статистика -->
+    <div class="stats-section">
+        <h2 class="section-title">📊 Статистика обращений</h2>
+        <div class="stats-container" id="statsContainer">
+            <div class="stat-card stat-total">
+                <div class="stat-icon">📋</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statTotal">-</div>
+                    <div class="stat-label">Всего обращений</div>
+                </div>
+            </div>
+            <div class="stat-card stat-open">
+                <div class="stat-icon">🔵</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statOpen">-</div>
+                    <div class="stat-label">Открытых</div>
+                </div>
+            </div>
+            <div class="stat-card stat-progress">
+                <div class="stat-icon">⚙️</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statInProgress">-</div>
+                    <div class="stat-label">В работе</div>
+                </div>
+            </div>
+            <div class="stat-card stat-resolved">
+                <div class="stat-icon">✅</div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statResolved">-</div>
+                    <div class="stat-label">Решённых</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Фильтры -->
+    <div class="filters-section">
+        <div class="filters-header">
+            <h2 class="section-title">🔍 Фильтры обращений</h2>
+            <button class="btn btn-secondary btn-refresh" onclick="loadTickets(); loadStats();">
+                <span id="refreshBtnText">🔄 Обновить</span>
+                <span id="refreshBtnLoader" class="loader" style="display: none;"></span>
+            </button>
+        </div>
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="filterStatus">📊 Статус:</label>
+                <select id="filterStatus" class="filter-select">
+                    <option value="">Все статусы</option>
+                    <option value="OPEN">🔵 Открыт</option>
+                    <option value="IN_PROGRESS">⚙️ В работе</option>
+                    <option value="RESOLVED">✅ Решён</option>
+                    <option value="AUTO_CLOSED">🤖 Авто-закрыт</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filterPriority">⚡ Приоритет:</label>
+                <select id="filterPriority" class="filter-select">
+                    <option value="">Все приоритеты</option>
+                    <option value="LOW">🟢 Низкий</option>
+                    <option value="MEDIUM">🔵 Средний</option>
+                    <option value="HIGH">🟠 Высокий</option>
+                    <option value="CRITICAL">🔴 Критический</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filterSource">📥 Источник:</label>
+                <select id="filterSource" class="filter-select">
+                    <option value="">Все источники</option>
+                    <option value="phone">📞 Звонки</option>
+                    <option value="portal">🌐 Портал</option>
+                    <option value="chat">💬 Чат</option>
+                    <option value="email">📧 Email</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Таблица тикетов -->
+    <div class="tickets-section">
+        <h2 class="section-title">📋 Список обращений</h2>
+        <div class="table-container">
+            <table class="tickets-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>👤 От пользователя</th>
+                        <th>📥 Источник</th>
+                        <th>🏷️ Категория</th>
+                        <th>⚡ Приоритет</th>
+                        <th>📊 Статус</th>
+                        <th>📅 Дата создания</th>
+                        <th>⚙️ Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsTableBody">
+                    <tr>
+                        <td colspan="8" class="loading">
+                            <div class="loading-spinner"></div>
+                            <div>Загрузка обращений...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для детального просмотра тикета -->
+<div id="ticketModal" class="modal" style="display: none;">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>📋 Обращение #<span id="modalTicketId"></span></h2>
+            <span class="close" onclick="closeTicketModal()">&times;</span>
+        </div>
+        
+        <div class="ticket-details">
+            <!-- Информация о пользователе -->
+            <div class="detail-row user-info-row" id="userInfoRow" style="display: none;">
+                <div class="detail-icon">👤</div>
+                <div class="detail-content">
+                    <strong>Запрос от пользователя:</strong>
+                    <span id="modalUserName" class="user-name"></span>
+                </div>
+            </div>
+            
+            <!-- Основная информация -->
+            <div class="details-grid">
+                <div class="detail-item">
+                    <div class="detail-icon">📥</div>
+                    <div class="detail-content">
+                        <strong>Источник:</strong>
+                        <span id="modalSource"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🌐</div>
+                    <div class="detail-content">
+                        <strong>Язык:</strong>
+                        <span id="modalLanguage"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🏷️</div>
+                    <div class="detail-content">
+                        <strong>Категория:</strong>
+                        <span id="modalCategory"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">⚡</div>
+                    <div class="detail-content">
+                        <strong>Приоритет:</strong>
+                        <span id="modalPriority"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📌</div>
+                    <div class="detail-content">
+                        <strong>Тип:</strong>
+                        <span id="modalType"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📊</div>
+                    <div class="detail-content">
+                        <strong>Статус:</strong>
+                        <span id="modalStatus"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Текст запроса -->
+            <div class="detail-section">
+                <div class="section-header">
+                    <span class="section-icon">📝</span>
+                    <strong>Текст запроса от пользователя:</strong>
+                </div>
+                <div class="detail-text" id="modalText"></div>
+            </div>
+            
+            <!-- Резюме и советы от ИИ -->
+            <div class="ai-info-section">
+                <div class="detail-section ai-summary">
+                    <div class="section-header">
+                        <span class="section-icon">🤖</span>
+                        <strong>Резюме от ИИ:</strong>
+                    </div>
+                    <div class="detail-text ai-text" id="modalSummary"></div>
+                </div>
+                
+                <div class="detail-section ai-advice">
+                    <div class="section-header">
+                        <span class="section-icon">💡</span>
+                        <strong>Совет от ИИ для специалиста:</strong>
+                    </div>
+                    <div class="detail-text ai-text" id="modalAutoResponse"></div>
+                </div>
+            </div>
+            
+            <!-- Форма ответа -->
+            <div class="response-section">
+                <div class="detail-section">
+                    <label for="modalLastResponse" class="response-label">
+                        <span class="section-icon">✍️</span>
+                        <strong>Ваш ответ пользователю:</strong>
+                    </label>
+                    <textarea id="modalLastResponse" rows="6" placeholder="Введите ваш ответ пользователю. Этот ответ будет виден пользователю в его профиле." class="response-textarea"></textarea>
+                    <small class="form-hint">💬 Этот ответ будет отправлен пользователю и отобразится в его профиле</small>
+                </div>
+                
+                <div class="detail-section">
+                    <label for="modalStatusSelect" class="status-label">
+                        <span class="section-icon">📊</span>
+                        <strong>Изменить статус обращения:</strong>
+                    </label>
+                    <select id="modalStatusSelect" class="status-select">
+                        <option value="OPEN">🔵 Открыт</option>
+                        <option value="IN_PROGRESS">⚙️ В работе</option>
+                        <option value="RESOLVED">✅ Решён</option>
+                    </select>
+                    <small class="form-hint">Выберите текущий статус обработки обращения</small>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-success btn-save" onclick="saveTicketChanges()">
+                    <span id="saveBtnText">💾 Сохранить ответ</span>
+                    <span id="saveBtnLoader" class="loader" style="display: none;"></span>
+                </button>
+                <button class="btn btn-secondary" onclick="closeTicketModal()">❌ Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/specialist_dashboard.js') }}"></script>
+{% endblock %}
+    <div class="filters-section">
+        <div class="filters-header">
+            <h2 class="section-title">🔍 Фильтры обращений</h2>
+            <button class="btn btn-secondary btn-refresh" onclick="loadTickets(); loadStats();">
+                <span id="refreshBtnText">🔄 Обновить</span>
+                <span id="refreshBtnLoader" class="loader" style="display: none;"></span>
+            </button>
+        </div>
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="filterStatus">📊 Статус:</label>
+                <select id="filterStatus" class="filter-select">
+                    <option value="">Все статусы</option>
+                    <option value="OPEN">🔵 Открыт</option>
+                    <option value="IN_PROGRESS">⚙️ В работе</option>
+                    <option value="RESOLVED">✅ Решён</option>
+                    <option value="AUTO_CLOSED">🤖 Авто-закрыт</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filterPriority">⚡ Приоритет:</label>
+                <select id="filterPriority" class="filter-select">
+                    <option value="">Все приоритеты</option>
+                    <option value="LOW">🟢 Низкий</option>
+                    <option value="MEDIUM">🔵 Средний</option>
+                    <option value="HIGH">🟠 Высокий</option>
+                    <option value="CRITICAL">🔴 Критический</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filterSource">📥 Источник:</label>
+                <select id="filterSource" class="filter-select">
+                    <option value="">Все источники</option>
+                    <option value="phone">📞 Звонки</option>
+                    <option value="portal">🌐 Портал</option>
+                    <option value="chat">💬 Чат</option>
+                    <option value="email">📧 Email</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Таблица тикетов -->
+    <div class="tickets-section">
+        <h2 class="section-title">📋 Список обращений</h2>
+        <div class="table-container">
+            <table class="tickets-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>👤 От пользователя</th>
+                        <th>📥 Источник</th>
+                        <th>🏷️ Категория</th>
+                        <th>⚡ Приоритет</th>
+                        <th>📊 Статус</th>
+                        <th>📅 Дата создания</th>
+                        <th>⚙️ Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsTableBody">
+                    <tr>
+                        <td colspan="8" class="loading">
+                            <div class="loading-spinner"></div>
+                            <div>Загрузка обращений...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для детального просмотра тикета -->
+<div id="ticketModal" class="modal" style="display: none;">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>📋 Обращение #<span id="modalTicketId"></span></h2>
+            <span class="close" onclick="closeTicketModal()">&times;</span>
+        </div>
+        
+        <div class="ticket-details">
+            <!-- Информация о пользователе -->
+            <div class="detail-row user-info-row" id="userInfoRow" style="display: none;">
+                <div class="detail-icon">👤</div>
+                <div class="detail-content">
+                    <strong>Запрос от пользователя:</strong>
+                    <span id="modalUserName" class="user-name"></span>
+                </div>
+            </div>
+            
+            <!-- Основная информация -->
+            <div class="details-grid">
+                <div class="detail-item">
+                    <div class="detail-icon">📥</div>
+                    <div class="detail-content">
+                        <strong>Источник:</strong>
+                        <span id="modalSource"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🌐</div>
+                    <div class="detail-content">
+                        <strong>Язык:</strong>
+                        <span id="modalLanguage"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🏷️</div>
+                    <div class="detail-content">
+                        <strong>Категория:</strong>
+                        <span id="modalCategory"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">⚡</div>
+                    <div class="detail-content">
+                        <strong>Приоритет:</strong>
+                        <span id="modalPriority"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📌</div>
+                    <div class="detail-content">
+                        <strong>Тип:</strong>
+                        <span id="modalType"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📊</div>
+                    <div class="detail-content">
+                        <strong>Статус:</strong>
+                        <span id="modalStatus"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Текст запроса -->
+            <div class="detail-section">
+                <div class="section-header">
+                    <span class="section-icon">📝</span>
+                    <strong>Текст запроса от пользователя:</strong>
+                </div>
+                <div class="detail-text" id="modalText"></div>
+            </div>
+            
+            <!-- Резюме и советы от ИИ -->
+            <div class="ai-info-section">
+                <div class="detail-section ai-summary">
+                    <div class="section-header">
+                        <span class="section-icon">🤖</span>
+                        <strong>Резюме от ИИ:</strong>
+                    </div>
+                    <div class="detail-text ai-text" id="modalSummary"></div>
+                </div>
+                
+                <div class="detail-section ai-advice">
+                    <div class="section-header">
+                        <span class="section-icon">💡</span>
+                        <strong>Совет от ИИ для специалиста:</strong>
+                    </div>
+                    <div class="detail-text ai-text" id="modalAutoResponse"></div>
+                </div>
+            </div>
+            
+            <!-- Форма ответа -->
+            <div class="response-section">
+                <div class="detail-section">
+                    <label for="modalLastResponse" class="response-label">
+                        <span class="section-icon">✍️</span>
+                        <strong>Ваш ответ пользователю:</strong>
+                    </label>
+                    <textarea id="modalLastResponse" rows="6" placeholder="Введите ваш ответ пользователю. Этот ответ будет виден пользователю в его профиле." class="response-textarea"></textarea>
+                    <small class="form-hint">💬 Этот ответ будет отправлен пользователю и отобразится в его профиле</small>
+                </div>
+                
+                <div class="detail-section">
+                    <label for="modalStatusSelect" class="status-label">
+                        <span class="section-icon">📊</span>
+                        <strong>Изменить статус обращения:</strong>
+                    </label>
+                    <select id="modalStatusSelect" class="status-select">
+                        <option value="OPEN">🔵 Открыт</option>
+                        <option value="IN_PROGRESS">⚙️ В работе</option>
+                        <option value="RESOLVED">✅ Решён</option>
+                    </select>
+                    <small class="form-hint">Выберите текущий статус обработки обращения</small>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-success btn-save" onclick="saveTicketChanges()">
+                    <span id="saveBtnText">💾 Сохранить ответ</span>
+                    <span id="saveBtnLoader" class="loader" style="display: none;"></span>
+                </button>
+                <button class="btn btn-secondary" onclick="closeTicketModal()">❌ Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/specialist_dashboard.js') }}"></script>
+{% endblock %}
+

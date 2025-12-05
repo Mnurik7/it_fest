@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет - Казахтелеком{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Добро пожаловать, {{ client.full_name }}!</h1>
+        <p class="subtitle">Лицевой счет: <strong>{{ client.contract_number }}</strong></p>
+    </div>
+
+    {% if outage %}
+    <div class="alert alert-warning">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-content">
+            <h3>В вашем районе ведутся восстановительные работы</h3>
+            <p><strong>Причина:</strong> {{ outage.reason or 'не указана' }}</p>
+            <p><strong>Восстановление:</strong> {{ outage.estimated_end or 'уточняется' }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="dashboard-grid">
+        <div class="card">
+            <div class="card-header">
+                <h2>Мои услуги</h2>
+            </div>
+            <div class="card-body">
+                {% if services %}
+                <div class="services-list">
+                    {% for service in services %}
+                    <div class="service-item">
+                        <div class="service-name">{{ service.tariff_name }}</div>
+                        <div class="service-status">
+                            {% if service.is_active %}
+                                <span class="badge badge-success">Активна</span>
+                            {% else %}
+                                <span class="badge badge-danger">Неактивна</span>
+                            {% endif %}
+                            {% if service.is_blocked %}
+                                <span class="badge badge-warning">Заблокирована</span>
+                                {% if service.debt_amount > 0 %}
+                                <span class="debt">Долг: {{ "%.0f"|format(service.debt_amount) }} тг</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Услуги не найдены</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Создать обращение</h2>
+            </div>
+            <div class="card-body">
+                <form id="ticket-form" class="ticket-form">
+                    <div class="form-group">
+                        <label for="problem-message">Опишите вашу проблему</label>
+                        <textarea id="problem-message" name="message" class="form-textarea" 
+                                  rows="4" placeholder="Например: Не работает интернет" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Отправить</button>
+                </form>
+                <div id="ticket-response" class="ticket-response"></div>
+            </div>
+        </div>
+    </div>
+
+    {% if requests %}
+    <div class="card">
+        <div class="card-header">
+            <h2>Последние обращения</h2>
+        </div>
+        <div class="card-body">
+            <div class="requests-list">
+                {% for req in requests %}
+                <div class="request-item">
+                    <div class="request-header">
+                        <span class="request-id">Заявка #{{ req.id }}</span>
+                        <span class="badge badge-{{ 'success' if req.status == 'closed' else 'warning' if req.status == 'in_work' else 'info' }}">
+                            {{ req.status }}
+                        </span>
+                    </div>
+                    <div class="request-body">
+                        <p><strong>Тип:</strong> {{ req.problem_type }}</p>
+                        <p><strong>Дата:</strong> {{ req.created_at }}</p>
+                        {% if req.comment %}
+                        <p><strong>Комментарий:</strong> {{ req.comment }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{{ url_for('tickets') }}" class="btn btn-secondary">Все обращения</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+

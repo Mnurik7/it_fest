@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Создать обращение - AI Help Desk{% endblock %}
+
+{% block content %}
+<div class="ticket-form-container">
+    <h1>Помощь и поддержка</h1>
+    <p class="subtitle">Опишите вашу проблему или задайте вопрос. ИИ-ассистент даст вам совет, а при необходимости вы сможете обратиться к оператору.</p>
+    
+    <form id="ticketForm" class="ticket-form">
+        <div class="form-group">
+            <label for="text">Опишите проблему или задайте вопрос:</label>
+            <textarea 
+                id="text" 
+                name="text" 
+                rows="6" 
+                placeholder="Опишите вашу проблему или задайте вопрос. Поддерживаются русский и казахский языки."
+                required
+            ></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+            <span id="submitText">Получить совет от ИИ</span>
+            <span id="submitLoader" class="loader" style="display: none;"></span>
+        </button>
+    </form>
+    
+    <!-- Блок с советом от ИИ -->
+    <div id="aiAdvice" class="ai-advice-container" style="display: none;">
+        <h2>💡 Совет от ИИ-ассистента</h2>
+        <div id="aiAdviceContent" class="ai-advice-content"></div>
+        <div class="ai-advice-actions">
+            <button type="button" class="btn btn-success" id="satisfiedBtn" style="display: none;">
+                ✓ Проблема решена
+            </button>
+            <button type="button" class="btn btn-primary" id="contactSpecialistBtn">
+                👤 Обратиться к оператору
+            </button>
+        </div>
+    </div>
+    
+    <!-- Скрытые поля для создания тикета -->
+    <div id="ticketFormHidden" style="display: none;">
+        <input type="hidden" id="source" value="portal">
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}
+

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Мои обращения - Казахтелеком{% endblock %}
+
+{% block content %}
+<div class="tickets-page">
+    <div class="page-header">
+        <h1>Мои обращения</h1>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Назад</a>
+    </div>
+
+    {% if requests %}
+    <div class="card">
+        <div class="card-header">
+            <h2>Заявки в системе</h2>
+        </div>
+        <div class="card-body">
+            <div class="requests-list">
+                {% for req in requests %}
+                <div class="request-item">
+                    <div class="request-header">
+                        <span class="request-id">Заявка #{{ req.id }}</span>
+                        <span class="badge badge-{{ 'success' if req.status == 'closed' else 'warning' if req.status == 'in_work' else 'info' }}">
+                            {{ req.status }}
+                        </span>
+                    </div>
+                    <div class="request-body">
+                        <p><strong>Тип проблемы:</strong> {{ req.problem_type }}</p>
+                        <p><strong>Канал:</strong> {{ req.channel }}</p>
+                        <p><strong>Дата создания:</strong> {{ req.created_at }}</p>
+                        {% if req.resolved_at %}
+                        <p><strong>Дата решения:</strong> {{ req.resolved_at }}</p>
+                        {% endif %}
+                        {% if req.comment %}
+                        <p><strong>Комментарий:</strong> {{ req.comment }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if tickets %}
+    <div class="card">
+        <div class="card-header">
+            <h2>Обращения в боте</h2>
+        </div>
+        <div class="card-body">
+            <div class="requests-list">
+                {% for ticket in tickets %}
+                <div class="request-item">
+                    <div class="request-header">
+                        <span class="request-id">Обращение #{{ ticket.id }}</span>
+                        <span class="badge badge-{{ 'success' if ticket.status == 'resolved' else 'warning' if ticket.status == 'in_progress' else 'info' }}">
+                            {{ ticket.status }}
+                        </span>
+                    </div>
+                    <div class="request-body">
+                        <p><strong>Проблема:</strong> {{ ticket.message[:100] }}{% if ticket.message|length > 100 %}...{% endif %}</p>
+                        <p><strong>Категория:</strong> {{ ticket.category or 'не определена' }}</p>
+                        <p><strong>Дата:</strong> {{ ticket.created_at }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not requests and not tickets %}
+    <div class="card">
+        <div class="card-body text-center">
+            <p class="text-muted">У вас пока нет обращений</p>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Создать обращение</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
