@@ -1,0 +1,1296 @@
+{% extends "base.html" %}
+
+{% block title %}AI Business Analyst - HelpDesk{% endblock %}
+
+{% block content %}
+<div class="ba-container">
+    <!-- Header Section -->
+    <div class="ba-header">
+        <div class="ba-header-left">
+            <div class="ba-icon">📄</div>
+            <div>
+                <h1 class="ba-title">AI Business Analyst</h1>
+                <p class="ba-subtitle">Автоматизация сбора требований и документации</p>
+            </div>
+        </div>
+        <div class="ba-header-right">
+            <button class="ba-btn-secondary" onclick="window.location.href='/confluence-docs'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                Confluence
+            </button>
+            <button class="ba-btn-primary" onclick="newProject()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Новый проект
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content: Two Panels -->
+    <div class="ba-main-content">
+        <!-- Left Panel: Requirements Gathering -->
+        <div class="ba-left-panel">
+            <div class="ba-panel-header">
+                <h3>Сбор требований</h3>
+                <p>AI-ассистент задаёт вопросы для формирования BRD</p>
+            </div>
+            <div class="ba-chat-container" id="requirements-chat">
+                <div class="ba-message bot-message">
+                    <div class="ba-message-avatar">🧠</div>
+                    <div class="ba-message-content">
+                        <div class="ba-message-text">
+                            Здравствуйте! Я AI Business Analyst. Давайте начнём сбор требований для вашего проекта. Какова основная цель проекта?
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ba-chat-input-container">
+                <div class="ba-file-upload-area" id="file-upload-area">
+                    <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt" style="display: none;" onchange="handleFileSelect(event)">
+                    <button class="ba-file-btn" onclick="document.getElementById('file-input').click()" title="Загрузить документ">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </button>
+                </div>
+                <input type="text" id="requirements-input" class="ba-chat-input" placeholder="Введите ответ или загрузите документ..." onkeydown="handleRequirementsKeyDown(event)">
+                <button class="ba-send-btn" onclick="sendRequirementsMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+            <div class="ba-file-info" id="file-info" style="display: none;">
+                <span id="file-name"></span>
+                <button class="ba-file-remove" onclick="removeFile()">×</button>
+            </div>
+        </div>
+
+        <!-- Right Panel: BRD -->
+        <div class="ba-right-panel">
+            <div class="ba-panel-header">
+                <div>
+                    <h3>Business Requirements Document</h3>
+                    <p>Поля заполняются автоматически из диалога</p>
+                </div>
+                <div class="ba-header-actions">
+                    <button class="ba-header-btn" onclick="generateBRDManually()" title="Сгенерировать документ">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    </button>
+                    <button class="ba-header-btn" onclick="exportBRD()" title="Экспортировать">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="ba-brd-content" id="brd-content">
+                <div class="ba-brd-section">
+                    <label class="ba-field-label">
+                        <span>Название проекта</span>
+                        <span class="ba-ai-hint">🤖 Автозаполняется из диалога</span>
+                    </label>
+                    <div class="ba-input-wrapper">
+                        <input type="text" id="project-name" class="ba-editable-input" value="" 
+                               oninput="handleProjectNameInput(this)" 
+                               onfocus="showAutocompleteSuggestions(this, 'project_name')" 
+                               onblur="hideAutocompleteSuggestions(this); saveBRDData()" 
+                               placeholder="Начните вводить или выберите из подсказок">
+                        <div class="ba-autocomplete-dropdown" id="project-name-autocomplete"></div>
+                    </div>
+                </div>
+                
+                <div class="ba-brd-section">
+                    <label class="ba-field-label">
+                        <span>Scope (Область охвата)</span>
+                        <span class="ba-ai-hint">🤖 AI предложит элементы на основе проекта</span>
+                    </label>
+                    <div class="ba-scope-input-wrapper">
+                        <input type="text" id="scope-input" class="ba-scope-input" 
+                               placeholder="Введите элемент scope или нажмите 'AI предложит'"
+                               onkeydown="handleScopeInputKeyDown(event)"
+                               onfocus="showScopeSuggestions()">
+                        <button class="ba-ai-suggest-btn" onclick="suggestScopeItems()" title="AI предложит элементы">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            AI предложит
+                        </button>
+                    </div>
+                    <div class="ba-checklist" id="scope-checklist"></div>
+                </div>
+                
+                <div class="ba-brd-section">
+                    <label class="ba-field-label">
+                        <span>KPI метрики</span>
+                        <span class="ba-ai-hint">🤖 AI предложит метрики для вашего проекта</span>
+                    </label>
+                    <div class="ba-kpi-input-wrapper">
+                        <input type="text" id="kpi-input" class="ba-kpi-input" 
+                               placeholder="Введите метрику или нажмите 'AI предложит'"
+                               onkeydown="handleKPIInputKeyDown(event)">
+                        <button class="ba-ai-suggest-btn" onclick="suggestKPIMetrics()" title="AI предложит метрики">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            AI предложит
+                        </button>
+                    </div>
+                    <div id="kpi-list"></div>
+                </div>
+                
+                <div class="ba-brd-actions">
+                    <button class="ba-quick-fill-btn" onclick="quickFillFromChat(this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        Быстро заполнить из диалога
+                    </button>
+                    <button class="ba-quick-fill-btn secondary" onclick="quickFillFromText()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        Заполнить из текста
+                    </button>
+                </div>
+                
+                <div class="ba-brd-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e5e7eb;">
+                    <button class="ba-generate-btn" onclick="generateBRDFromFields()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        Сгенерировать документ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Cases Section -->
+    <div class="ba-section">
+        <div class="ba-section-header">
+            <div>
+                <h3>Use Cases</h3>
+                <p>Автоматически сгенерированные сценарии использования</p>
+            </div>
+            <button class="ba-btn-secondary" onclick="generateMoreUseCases()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Генерировать ещё
+            </button>
+        </div>
+        <div class="ba-usecases-grid" id="usecases-grid">
+        </div>
+    </div>
+
+    <!-- User Stories Section -->
+    <div class="ba-section">
+        <div class="ba-section-header">
+            <div>
+                <h3>User Stories</h3>
+                <p>Agile-формат пользовательских историй</p>
+            </div>
+            <button class="ba-btn-secondary" onclick="addUserStory()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Добавить историю
+            </button>
+        </div>
+        <div class="ba-userstories-grid" id="userstories-grid">
+        </div>
+    </div>
+
+    <!-- Bottom Actions Section -->
+    <div class="ba-actions-section">
+        <div class="ba-action-card" onclick="generateBPMN()">
+            <div class="ba-action-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path></svg>
+            </div>
+            <h4>Генерация BPMN</h4>
+            <p>Автоматическое создание диаграмм бизнес-процессов</p>
+            <button class="ba-action-btn">Сгенерировать</button>
+        </div>
+        <div class="ba-action-card" onclick="downloadBRD()">
+            <div class="ba-action-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </div>
+            <h4>Шаблон BRD</h4>
+            <p>Полный документ требований в формате Word/PDF</p>
+            <button class="ba-action-btn">Скачать</button>
+        </div>
+        <div class="ba-action-card" onclick="publishToConfluence()">
+            <div class="ba-action-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            </div>
+            <h4>Выгрузка в Confluence</h4>
+            <p>Сохранение документации в локальное хранилище</p>
+            <button class="ba-action-btn">Опубликовать</button>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/ai_business_analyst.js') }}"></script>
+
+<style>
+.ba-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.ba-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.ba-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ba-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+
+.ba-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.ba-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 4px 0 0 0;
+}
+
+.ba-header-right {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.ba-btn-primary, .ba-btn-secondary {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.ba-btn-primary {
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(165, 42, 42, 0.3);
+}
+
+.ba-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(165, 42, 42, 0.4);
+}
+
+.ba-btn-secondary {
+    background: white;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+}
+
+.ba-btn-secondary:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.ba-main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.ba-left-panel, .ba-right-panel {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+}
+
+.ba-panel-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.ba-header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ba-header-btn {
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.ba-header-btn:hover {
+    background: #f9fafb;
+    border-color: #8B1E2D;
+    color: #8B1E2D;
+}
+
+.ba-panel-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 4px 0;
+}
+
+.ba-panel-header p {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.ba-export-btn {
+    background: none;
+    border: none;
+    color: #8B1E2D;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.ba-export-btn:hover {
+    background: #f3f4f6;
+}
+
+.ba-chat-container {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    padding-right: 0.5rem;
+}
+
+.ba-message {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.ba-message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ba-message-content {
+    flex: 1;
+}
+
+.ba-message-text {
+    background: #f3f4f6;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1a1a1a;
+}
+
+.user-message .ba-message-text {
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    color: white;
+}
+
+.ba-chat-input-container {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    align-items: center;
+}
+
+.ba-file-upload-area {
+    display: flex;
+    align-items: center;
+}
+
+.ba-file-btn {
+    width: 40px;
+    height: 40px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.ba-file-btn:hover {
+    background: #e5e7eb;
+    border-color: #8B1E2D;
+    color: #8B1E2D;
+}
+
+.ba-file-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: #f0f9ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    font-size: 13px;
+    color: #1e40af;
+}
+
+.ba-file-remove {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.ba-file-remove:hover {
+    background: #fee2e2;
+}
+
+.ba-document-analysis {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f0f9ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+}
+
+.ba-document-analysis h5 {
+    margin: 0 0 0.75rem 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e40af;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ba-document-analysis-content {
+    font-size: 13px;
+    color: #1e40af;
+    line-height: 1.6;
+}
+
+.ba-document-analysis-content strong {
+    color: #1e3a8a;
+}
+
+.ba-chat-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.ba-chat-input:focus {
+    outline: none;
+    border-color: #8B1E2D;
+    box-shadow: 0 0 0 3px rgba(139, 30, 45, 0.1);
+}
+
+.ba-send-btn {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.ba-send-btn:hover {
+    transform: scale(1.05);
+}
+
+.ba-brd-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.ba-brd-section {
+    margin-bottom: 1.5rem;
+}
+
+.ba-field-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.ba-ai-hint {
+    font-size: 11px;
+    font-weight: 400;
+    color: #6b7280;
+    opacity: 0.8;
+}
+
+.ba-input-wrapper {
+    position: relative;
+}
+
+.ba-scope-input-wrapper, .ba-kpi-input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.ba-scope-input, .ba-kpi-input {
+    flex: 1;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: white;
+    transition: all 0.2s;
+}
+
+.ba-scope-input:focus, .ba-kpi-input:focus {
+    outline: none;
+    border-color: #8B1E2D;
+    box-shadow: 0 0 0 3px rgba(139, 30, 45, 0.1);
+}
+
+.ba-ai-suggest-btn {
+    padding: 0.625rem 1rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.ba-ai-suggest-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.ba-autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    margin-top: 4px;
+}
+
+.ba-autocomplete-dropdown.show {
+    display: block;
+}
+
+.ba-autocomplete-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-size: 14px;
+    color: #1a1a1a;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.2s;
+}
+
+.ba-autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.ba-autocomplete-item:hover {
+    background: #f9fafb;
+}
+
+.ba-autocomplete-item.selected {
+    background: #f0f9ff;
+    color: #8B1E2D;
+    font-weight: 500;
+}
+
+.ba-brd-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.ba-quick-fill-btn {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(165, 42, 42, 0.2);
+}
+
+.ba-quick-fill-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(165, 42, 42, 0.3);
+}
+
+.ba-quick-fill-btn.secondary {
+    background: white;
+    color: #8B1E2D;
+    border: 1px solid #8B1E2D;
+    box-shadow: none;
+}
+
+.ba-quick-fill-btn.secondary:hover {
+    background: #f9fafb;
+    box-shadow: 0 2px 8px rgba(139, 30, 45, 0.1);
+}
+
+.ba-brd-section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 0.75rem 0;
+}
+
+.ba-brd-section p {
+    font-size: 14px;
+    color: #4b5563;
+    margin: 0;
+}
+
+.ba-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ba-checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.ba-checklist-item svg {
+    color: #10b981;
+    flex-shrink: 0;
+}
+
+.ba-kpi-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+}
+
+.ba-kpi-item.expandable {
+    cursor: pointer;
+}
+
+.ba-kpi-label {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.ba-kpi-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 12px;
+}
+
+.ba-kpi-bad {
+    color: #ef4444;
+    font-weight: 500;
+}
+
+.expand-icon {
+    color: #9ca3af;
+    transition: transform 0.2s;
+}
+
+.ba-section {
+    margin-bottom: 2rem;
+}
+
+.ba-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.ba-section-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 4px 0;
+}
+
+.ba-section-header p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.ba-usecases-grid, .ba-userstories-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.ba-usecase-card, .ba-userstory-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ba-usecase-card:hover, .ba-userstory-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.ba-usecase-header, .ba-userstory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.ba-usecase-id, .ba-userstory-id {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8B1E2D;
+}
+
+.ba-status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.ba-status-badge.ready {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.ba-status-badge.in-progress {
+    background: #fce7f3;
+    color: #9f1239;
+}
+
+.ba-status-badge.draft {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.ba-usecase-title, .ba-userstory-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 0.5rem 0;
+}
+
+.ba-usecase-role {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.ba-usecase-desc {
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.ba-userstory-text {
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+.ba-actions-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.ba-action-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ba-action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.ba-action-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin: 0 auto 1rem;
+}
+
+.ba-action-card h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 0.5rem 0;
+}
+
+.ba-action-card p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0 0 1rem 0;
+}
+
+.ba-action-btn {
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    color: white;
+    border: none;
+    padding: 0.625rem 1.5rem;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.ba-action-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Scrollbar */
+.ba-chat-container::-webkit-scrollbar,
+.ba-brd-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ba-chat-container::-webkit-scrollbar-track,
+.ba-brd-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.ba-chat-container::-webkit-scrollbar-thumb,
+.ba-brd-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.ba-chat-container::-webkit-scrollbar-thumb:hover,
+.ba-brd-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Editable inputs */
+.ba-editable-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: white;
+    transition: all 0.2s;
+}
+
+.ba-editable-input:focus {
+    outline: none;
+    border-color: #8B1E2D;
+    box-shadow: 0 0 0 3px rgba(139, 30, 45, 0.1);
+}
+
+.ba-editable-text {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: #4b5563;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.ba-editable-text:focus {
+    outline: none;
+    background: #f9fafb;
+    border: 1px solid #8B1E2D;
+}
+
+.ba-checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 14px;
+    color: #4b5563;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.ba-checklist-item:hover {
+    background: #f9fafb;
+}
+
+.ba-checklist-item .ba-editable-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.ba-add-btn {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #8B1E2D;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.ba-add-btn:hover {
+    background: #8B1E2D;
+    color: white;
+    border-color: #8B1E2D;
+}
+
+.ba-remove-btn {
+    background: #fee2e2;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #dc2626;
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    opacity: 0;
+}
+
+.ba-checklist-item:hover .ba-remove-btn,
+.ba-kpi-item:hover .ba-remove-btn {
+    opacity: 1;
+}
+
+.ba-remove-btn:hover {
+    background: #dc2626;
+    color: white;
+}
+
+.ba-kpi-label-input {
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: #4b5563;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.ba-kpi-label-input:focus {
+    outline: none;
+    background: #f9fafb;
+    border: 1px solid #8B1E2D;
+}
+
+.ba-kpi-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.ba-kpi-item .ba-kpi-label-input {
+    min-width: 150px;
+}
+
+.ba-kpi-value-input {
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    color: #4b5563;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    min-width: 80px;
+    transition: all 0.2s;
+}
+
+.ba-kpi-value-input:focus {
+    outline: none;
+    background: white;
+    border: 1px solid #8B1E2D;
+}
+
+.ba-kpi-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 12px;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.ba-kpi-details span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.ba-generate-btn {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(165, 42, 42, 0.3);
+}
+
+.ba-generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(165, 42, 42, 0.4);
+}
+
+.ba-generate-btn:active {
+    transform: translateY(0);
+}
+
+.ba-generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+.ba-checklist:empty::before {
+    content: "Нажмите кнопку + чтобы добавить элемент";
+    display: block;
+    padding: 1rem;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 13px;
+    font-style: italic;
+}
+
+#kpi-list:empty::before {
+    content: "Нажмите кнопку + чтобы добавить метрику";
+    display: block;
+    padding: 1rem;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* Autocomplete Styles */
+.ba-suggestions {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f0f9ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+}
+
+.ba-suggestions-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 0.75rem;
+}
+
+.ba-suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ba-suggestion-item {
+    padding: 0.75rem 1rem;
+    background: white;
+    border: 1px solid #dbeafe;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1e40af;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ba-suggestion-item:hover {
+    background: #dbeafe;
+    border-color: #3b82f6;
+    transform: translateX(4px);
+}
+
+.ba-autofill-button {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.ba-btn-autofill {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.ba-btn-autofill:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.ba-btn-autofill:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.spinner {
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3498db;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}

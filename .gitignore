@@ -57,3 +57,12 @@ bot.pid
 *.tmp
 *.temp
 
+# Google OAuth secrets
+*client_secret*.json
+*credentials*.json
+
+# Large model files (uncomment if needed)
+# *.pkl
+# *.h5
+# *.pt
+

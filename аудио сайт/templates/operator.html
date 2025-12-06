@@ -1,0 +1,726 @@
+{% extends "base.html" %}
+
+{% block title %}Панель оператора - AI Help Desk{% endblock %}
+
+{% block extra_head %}
+<style>
+.operator-compact-container {
+    max-width: 100%;
+    padding: var(--spacing-lg);
+}
+
+.operator-header-compact {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.operator-avatar-container-compact {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.operator-avatar-compact {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--color-primary);
+    cursor: pointer;
+    transition: var(--transition);
+    display: block;
+}
+
+.operator-avatar-compact:hover {
+    opacity: 0.8;
+}
+
+.operator-avatar-placeholder-compact {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    border: 3px solid var(--color-primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.operator-avatar-placeholder-compact:hover {
+    opacity: 0.8;
+}
+
+.avatar-upload-overlay-compact {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 28px;
+    height: 28px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid var(--color-bg);
+    font-size: 0.875rem;
+}
+
+.avatar-upload-input-compact {
+    display: none;
+}
+
+.operator-info-compact {
+    flex: 1;
+}
+
+.operator-info-compact h1 {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: 1.5rem;
+}
+
+.operator-info-compact p {
+    margin: 0;
+    color: var(--color-text-light);
+    font-size: 0.875rem;
+}
+
+.operator-status-control-compact {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.btn-status-online-compact {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+}
+
+.stats-container-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card-compact {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: var(--transition);
+}
+
+.stat-card-compact:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-icon-compact {
+    font-size: 1.25rem;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.stat-content-compact {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-value-compact {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.125rem;
+    line-height: 1.2;
+}
+
+.stat-label-compact {
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filters-section-compact {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.filters-header-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.filters-header-compact h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.filters-container-compact {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.filter-group-compact {
+    flex: 1;
+    min-width: 150px;
+}
+
+.filter-group-compact label {
+    display: block;
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-light);
+}
+
+.filter-select-compact {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+}
+
+.chats-section-compact {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.chats-section-compact h3 {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: 1rem;
+}
+
+.tickets-section-compact {
+    margin-top: var(--spacing-lg);
+}
+
+.tickets-section-compact h3 {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: 1.125rem;
+}
+
+.table-container-compact {
+    overflow-x: auto;
+}
+
+.tickets-table-compact {
+    width: 100%;
+    font-size: 0.875rem;
+}
+
+.tickets-table-compact th,
+.tickets-table-compact td {
+    padding: var(--spacing-sm);
+}
+
+.tickets-table-compact th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+@media (max-width: 768px) {
+    .operator-header-compact {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stats-container-compact {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .filters-container-compact {
+        flex-direction: column;
+    }
+    
+    .filter-group-compact {
+        min-width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="operator-compact-container">
+    <!-- Компактный заголовок с аватаром -->
+    <div class="operator-header-compact">
+        <div class="operator-avatar-container-compact">
+            {% if user and user.avatar_url %}
+            <img src="{{ user.avatar_url }}" alt="{{ user.username }}" class="operator-avatar-compact" id="operatorAvatar" onclick="document.getElementById('avatarUploadInputOperator').click();">
+            {% else %}
+            <div class="operator-avatar-placeholder-compact" onclick="document.getElementById('avatarUploadInputOperator').click();">
+                👤
+            </div>
+            {% endif %}
+            <div class="avatar-upload-overlay-compact" onclick="document.getElementById('avatarUploadInputOperator').click();" title="Изменить фото">
+                📷
+            </div>
+            <input type="file" id="avatarUploadInputOperator" class="avatar-upload-input-compact" accept="image/*" onchange="uploadAvatarOperator(event)">
+        </div>
+        <div class="operator-info-compact">
+            <h1>📞 {{ user.username if user else session.get('username') }}</h1>
+            <p>Отдел: <strong id="userDepartment">{{ user_department or 'Не указан' }}</strong></p>
+        </div>
+        <div class="operator-status-control-compact">
+            <button id="operatorStatusBtn" class="btn btn-status-online-compact" onclick="toggleOperatorStatus()">
+                <span id="operatorStatusIcon">🟢</span>
+                <span id="operatorStatusText">Онлайн</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Компактная статистика -->
+    <div class="stats-container-compact" id="statsContainer">
+        <div class="stat-card-compact stat-total">
+            <div class="stat-icon-compact">📋</div>
+            <div class="stat-content-compact">
+                <div class="stat-value-compact" id="statTotal">-</div>
+                <div class="stat-label-compact">Всего</div>
+            </div>
+        </div>
+        <div class="stat-card-compact stat-open">
+            <div class="stat-icon-compact">🔵</div>
+            <div class="stat-content-compact">
+                <div class="stat-value-compact" id="statOpen">-</div>
+                <div class="stat-label-compact">Открытых</div>
+            </div>
+        </div>
+        <div class="stat-card-compact stat-progress">
+            <div class="stat-icon-compact">⚙️</div>
+            <div class="stat-content-compact">
+                <div class="stat-value-compact" id="statInProgress">-</div>
+                <div class="stat-label-compact">В работе</div>
+            </div>
+        </div>
+        <div class="stat-card-compact stat-resolved">
+            <div class="stat-icon-compact">✅</div>
+            <div class="stat-content-compact">
+                <div class="stat-value-compact" id="statResolved">-</div>
+                <div class="stat-label-compact">Решённых</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Компактные фильтры -->
+    <div class="filters-section-compact">
+        <div class="filters-header-compact">
+            <h3>🔍 Фильтры</h3>
+            <button class="btn btn-secondary btn-sm" onclick="loadTickets(); loadStats();">
+                <span id="refreshBtnText">🔄 Обновить</span>
+                <span id="refreshBtnLoader" class="loader" style="display: none;"></span>
+            </button>
+        </div>
+        <div class="filters-container-compact">
+            <div class="filter-group-compact">
+                <label for="filterStatus">Статус</label>
+                <select id="filterStatus" class="filter-select-compact">
+                    <option value="">Все</option>
+                    <option value="OPEN">🔵 Открыт</option>
+                    <option value="IN_PROGRESS">⚙️ В работе</option>
+                    <option value="RESOLVED">✅ Решён</option>
+                    <option value="AUTO_CLOSED">🤖 Авто-закрыт</option>
+                </select>
+            </div>
+            
+            <div class="filter-group-compact">
+                <label for="filterPriority">Приоритет</label>
+                <select id="filterPriority" class="filter-select-compact">
+                    <option value="">Все</option>
+                    <option value="LOW">🟢 Низкий</option>
+                    <option value="MEDIUM">🔵 Средний</option>
+                    <option value="HIGH">🟠 Высокий</option>
+                    <option value="CRITICAL">🔴 Критический</option>
+                </select>
+            </div>
+            
+            <div class="filter-group-compact">
+                <label for="filterSource">Источник</label>
+                <select id="filterSource" class="filter-select-compact">
+                    <option value="">Все</option>
+                    <option value="phone">📞 Звонки</option>
+                    <option value="portal">🌐 Портал</option>
+                    <option value="chat">💬 Чат</option>
+                    <option value="email">📧 Email</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Секция чатов -->
+    <div class="chats-section-compact">
+        <div class="section-header" style="margin-bottom: var(--spacing-md);">
+            <h3>💬 Чаты с клиентами</h3>
+            <button class="btn btn-secondary btn-sm" onclick="loadWaitingChats(); loadActiveChats();">
+                <span>🔄 Обновить</span>
+            </button>
+        </div>
+        
+        <div class="operator-chat-container" id="chatContainer" style="display: none;">
+            <div class="chat-panel">
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <h3 id="chatHeaderTitle">Чат</h3>
+                        <div class="chat-status" id="chatStatus"></div>
+                    </div>
+                    <div class="chat-header-actions" id="operatorChatActions" style="display: none;">
+                        <button class="btn btn-primary btn-sm" id="operatorVoiceCallBtn" onclick="startVoiceCall()">📞 Звонок</button>
+                    </div>
+                    <div id="chatRatingSection" style="display: none; margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--color-border);">
+                        <div style="margin-bottom: var(--spacing-sm);">
+                            <strong>Оценка чата:</strong>
+                            <span id="chatRatingDisplay" style="margin-left: var(--spacing-sm);"></span>
+                        </div>
+                        <div id="chatRatingInput" style="display: flex; gap: var(--spacing-sm); align-items: center;">
+                            <span>Поставить оценку:</span>
+                            <div style="display: flex; gap: var(--spacing-xs);">
+                                <button class="rating-btn" data-rating="1" onclick="rateChat(1)">1</button>
+                                <button class="rating-btn" data-rating="2" onclick="rateChat(2)">2</button>
+                                <button class="rating-btn" data-rating="3" onclick="rateChat(3)">3</button>
+                                <button class="rating-btn" data-rating="4" onclick="rateChat(4)">4</button>
+                                <button class="rating-btn" data-rating="5" onclick="rateChat(5)">5</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-messages" id="operatorChatMessages"></div>
+                <div class="chat-input-container" id="operatorChatInputContainer">
+                    <div class="chat-input-wrapper">
+                        <textarea id="operatorMessageInput" class="chat-input" placeholder="Введите сообщение..." rows="2"></textarea>
+                        <div style="display: flex; gap: var(--spacing-sm);">
+                            <button id="operatorSendSpecialistBtn" class="btn btn-success btn-send btn-sm" onclick="openSpecialistModal()" title="Отправить специалиста">
+                                👨‍🔧 Специалист
+                            </button>
+                            <button id="operatorSendBtn" class="btn btn-primary btn-send btn-sm">Отправить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="ai-assistant-panel">
+                <div class="ai-assistant-header">
+                    <span>🤖 AI-Помощник</span>
+                </div>
+                <div class="ai-assistant-content" id="aiAssistantContent">
+                    <div class="empty-advice-message">
+                        <div class="empty-icon">🤖</div>
+                        <div>AI-помощник будет анализировать сообщения...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="waiting-chats-section">
+            <h4 style="font-size: 0.9375rem; margin-bottom: var(--spacing-sm);">⏳ Ожидающие</h4>
+            <div class="waiting-chats-list" id="waitingChatsList">
+                <div class="loading">Загрузка...</div>
+            </div>
+        </div>
+        
+        <div class="active-chats-section" style="margin-top: var(--spacing-md);">
+            <h4 style="font-size: 0.9375rem; margin-bottom: var(--spacing-sm);">✅ Активные</h4>
+            <div class="waiting-chats-list" id="activeChatsList">
+                <div class="loading">Загрузка...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Компактная таблица тикетов -->
+    <div class="tickets-section-compact">
+        <h3>📋 Список обращений</h3>
+        <div class="table-container-compact">
+            <table class="tickets-table-compact tickets-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Пользователь</th>
+                        <th>Источник</th>
+                        <th>Категория</th>
+                        <th>Приоритет</th>
+                        <th>Статус</th>
+                        <th>Дата</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsTableBody">
+                    <tr>
+                        <td colspan="8" class="loading">
+                            <div class="loading-spinner"></div>
+                            <div>Загрузка...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для детального просмотра тикета -->
+<div id="ticketModal" class="modal" style="display: none;">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>📋 Обращение #<span id="modalTicketId"></span></h2>
+            <span class="close" onclick="closeTicketModal()">&times;</span>
+        </div>
+        
+        <div class="ticket-details">
+            <!-- Информация о пользователе -->
+            <div class="detail-row user-info-row" id="userInfoRow" style="display: none;">
+                <div class="detail-icon">👤</div>
+                <div class="detail-content">
+                    <strong>Запрос от пользователя:</strong>
+                    <span id="modalUserName" class="user-name"></span>
+                </div>
+            </div>
+            
+            <!-- Основная информация -->
+            <div class="details-grid">
+                <div class="detail-item">
+                    <div class="detail-icon">📥</div>
+                    <div class="detail-content">
+                        <strong>Источник:</strong>
+                        <span id="modalSource"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🌐</div>
+                    <div class="detail-content">
+                        <strong>Язык:</strong>
+                        <span id="modalLanguage"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🏷️</div>
+                    <div class="detail-content">
+                        <strong>Категория:</strong>
+                        <span id="modalCategory"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">⚡</div>
+                    <div class="detail-content">
+                        <strong>Приоритет:</strong>
+                        <span id="modalPriority"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📌</div>
+                    <div class="detail-content">
+                        <strong>Тип:</strong>
+                        <span id="modalType"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📊</div>
+                    <div class="detail-content">
+                        <strong>Статус:</strong>
+                        <span id="modalStatus"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Текст запроса -->
+            <div class="detail-section">
+                <div class="section-header">
+                    <span class="section-icon">📝</span>
+                    <strong>Текст запроса от пользователя:</strong>
+                </div>
+                <div class="detail-text" id="modalText"></div>
+            </div>
+            
+            <!-- Резюме и советы от ИИ -->
+            <div class="ai-info-section">
+                <div class="detail-section ai-summary">
+                    <div class="section-header">
+                        <span class="section-icon">🤖</span>
+                        <strong>Резюме от ИИ:</strong>
+                    </div>
+                    <div class="detail-text ai-text" id="modalSummary"></div>
+                </div>
+                
+                <div class="detail-section ai-advice">
+                    <div class="section-header">
+                        <span class="section-icon">💡</span>
+                        <strong>Совет от ИИ для оператора:</strong>
+                    </div>
+                    <div class="detail-text ai-text" id="modalAutoResponse"></div>
+                </div>
+            </div>
+            
+            <!-- Форма ответа -->
+            <div class="response-section">
+                <div class="detail-section">
+                    <label for="modalLastResponse" class="response-label">
+                        <span class="section-icon">✍️</span>
+                        <strong>Ваш ответ пользователю:</strong>
+                    </label>
+                    <textarea id="modalLastResponse" rows="6" placeholder="Введите ваш ответ пользователю. Этот ответ будет виден пользователю в его профиле." class="response-textarea"></textarea>
+                    <small class="form-hint">💬 Этот ответ будет отправлен пользователю и отобразится в его профиле</small>
+                </div>
+                
+                <div class="detail-section">
+                    <label for="modalStatusSelect" class="status-label">
+                        <span class="section-icon">📊</span>
+                        <strong>Изменить статус обращения:</strong>
+                    </label>
+                    <select id="modalStatusSelect" class="status-select">
+                        <option value="OPEN">🔵 Открыт</option>
+                        <option value="IN_PROGRESS">⚙️ В работе</option>
+                        <option value="RESOLVED">✅ Решён</option>
+                    </select>
+                    <small class="form-hint">Выберите текущий статус обработки обращения</small>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-success btn-save" onclick="saveTicketChanges()">
+                    <span id="saveBtnText">💾 Сохранить ответ</span>
+                    <span id="saveBtnLoader" class="loader" style="display: none;"></span>
+                </button>
+                <button class="btn btn-secondary" onclick="closeTicketModal()">❌ Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для выбора специалиста -->
+<div id="specialistModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>👨‍🔧 Отправить специалиста</h2>
+            <span class="close" onclick="closeSpecialistModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="clientAddress">📍 Адрес клиента:</label>
+                <input type="text" id="clientAddress" class="form-input" placeholder="Введите адрес или выберите на карте" required>
+                <small class="form-hint">Введите адрес вручную или кликните на карте для выбора</small>
+            </div>
+            <div class="form-group">
+                <label>🗺️ Выберите адрес на карте:</label>
+                <div id="addressMapContainer" style="width: 100%; height: 400px; border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: var(--spacing-md); position: relative;">
+                    <div id="addressMapPlaceholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--color-text-light); background: var(--color-bg-secondary);">
+                        <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">🗺️</div>
+                        <div>Загрузка карты...</div>
+                    </div>
+                </div>
+                <small class="form-hint" id="mapHint">Кликните на карте, чтобы выбрать адрес</small>
+            </div>
+            <div class="form-group" style="display: none;" id="selectedCoordinates">
+                <small class="form-hint">Координаты: <span id="selectedLatLon"></span></small>
+            </div>
+            <div class="form-group">
+                <label for="specialistSelect">👨‍🔧 Выберите специалиста:</label>
+                <select id="specialistSelect" class="form-input" required>
+                    <option value="">Загрузка специалистов...</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-success" onclick="sendSpecialist()">
+                    <span id="sendSpecialistBtnText">📤 Отправить специалиста</span>
+                    <span id="sendSpecialistBtnLoader" class="loader" style="display: none;"></span>
+                </button>
+                <button class="btn btn-secondary" onclick="closeSpecialistModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Глобальные переменные для карты
+const TGIS_API_KEY = '{{ config.get("TGIS_API_KEY", "") }}';
+</script>
+<script src="{{ url_for('static', filename='js/operator.js') }}"></script>
+<script>
+// Загрузка аватара для оператора
+async function uploadAvatarOperator(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Проверка размера файла (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Файл слишком большой. Максимальный размер: 5MB');
+        return;
+    }
+    
+    // Проверка типа файла
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        alert('Недопустимый тип файла. Разрешены: PNG, JPG, JPEG, GIF, WEBP');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('avatar', file);
+    
+    try {
+        const response = await fetch('/api/upload-avatar', {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: formData
+        });
+        
+        if (response.status === 401) {
+            alert('Сессия истекла. Пожалуйста, войдите в систему снова.');
+            window.location.href = '/login';
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Обновляем аватар на странице
+            const avatarContainer = document.querySelector('.operator-avatar-container-compact');
+            if (avatarContainer) {
+                const existingImg = avatarContainer.querySelector('.operator-avatar-compact');
+                const existingPlaceholder = avatarContainer.querySelector('.operator-avatar-placeholder-compact');
+                
+                if (existingImg) {
+                    existingImg.src = data.avatar_url + '?t=' + Date.now();
+                } else if (existingPlaceholder) {
+                    existingPlaceholder.outerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" alt="Avatar" class="operator-avatar-compact" id="operatorAvatar" onclick="document.getElementById('avatarUploadInputOperator').click();">`;
+                } else {
+                    const newImg = document.createElement('img');
+                    newImg.src = data.avatar_url + '?t=' + Date.now();
+                    newImg.className = 'operator-avatar-compact';
+                    newImg.id = 'operatorAvatar';
+                    newImg.alt = 'Avatar';
+                    newImg.onclick = () => document.getElementById('avatarUploadInputOperator').click();
+                    avatarContainer.insertBefore(newImg, avatarContainer.firstChild);
+                }
+            }
+            
+            alert('✅ Фото профиля успешно загружено!');
+        } else {
+            alert('Ошибка загрузки: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        console.error('Error uploading avatar:', error);
+        alert('Произошла ошибка при загрузке фото');
+    }
+}
+</script>
+{% endblock %}

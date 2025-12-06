@@ -1,0 +1,126 @@
+{
+  "models": [
+    {
+      "version": "v1_20251203_235056",
+      "created_at": "2025-12-03T23:50:56.488946",
+      "description": "Обучение модели xgboost с полным pipeline",
+      "metrics": {
+        "precision": 0.7272727272727273,
+        "recall": 0.24242424242424243,
+        "f_beta": 0.27972027972027974,
+        "roc_auc": 0.9823387962833264,
+        "confusion_matrix": [
+          [
+            2593,
+            3
+          ],
+          [
+            25,
+            8
+          ]
+        ],
+        "test_size": 2629,
+        "train_size": 10512
+      },
+      "model_type": "xgboost",
+      "model_path": "ml_models\\saved_models\\v1_20251203_235056.pkl",
+      "data_paths": {
+        "transactions": "csv/транзакции в Мобильном интернет Банкинге.csv",
+        "behavioral": "csv/поведенческие паттерны клиентов.csv"
+      },
+      "feature_count": 37
+    },
+    {
+      "version": "v2_20251204_002528",
+      "created_at": "2025-12-04T00:25:28.328426",
+      "description": "Обучение модели xgboost с полным pipeline",
+      "metrics": {
+        "precision": 0.7272727272727273,
+        "recall": 0.24242424242424243,
+        "f_beta": 0.27972027972027974,
+        "roc_auc": 0.9823387962833264,
+        "confusion_matrix": [
+          [
+            2593,
+            3
+          ],
+          [
+            25,
+            8
+          ]
+        ],
+        "test_size": 2629,
+        "train_size": 10512
+      },
+      "model_type": "xgboost",
+      "model_path": "ml_models\\saved_models\\v2_20251204_002528.pkl",
+      "data_paths": {
+        "transactions": "csv/транзакции в Мобильном интернет Банкинге.csv",
+        "behavioral": "csv/поведенческие паттерны клиентов.csv"
+      },
+      "feature_count": 37
+    },
+    {
+      "version": "v3_20251204_002640",
+      "created_at": "2025-12-04T00:26:40.172427",
+      "description": "Обучение модели xgboost с полным pipeline",
+      "metrics": {
+        "precision": 0.7272727272727273,
+        "recall": 0.24242424242424243,
+        "f_beta": 0.27972027972027974,
+        "roc_auc": 0.9823387962833264,
+        "confusion_matrix": [
+          [
+            2593,
+            3
+          ],
+          [
+            25,
+            8
+          ]
+        ],
+        "test_size": 2629,
+        "train_size": 10512
+      },
+      "model_type": "xgboost",
+      "model_path": "ml_models\\saved_models\\v3_20251204_002640.pkl",
+      "data_paths": {
+        "transactions": "C:\\Users\\bauka\\OneDrive\\Desktop\\ForteBank.AI\\csv\\транзакции в Мобильном интернет Банкинге.csv",
+        "behavioral": "C:\\Users\\bauka\\OneDrive\\Desktop\\ForteBank.AI\\csv\\поведенческие паттерны клиентов.csv"
+      },
+      "feature_count": 37
+    },
+    {
+      "version": "v4_20251204_002804",
+      "created_at": "2025-12-04T00:28:04.904117",
+      "description": "Обучение модели xgboost с полным pipeline",
+      "metrics": {
+        "precision": 0.7272727272727273,
+        "recall": 0.24242424242424243,
+        "f_beta": 0.27972027972027974,
+        "roc_auc": 0.9823387962833264,
+        "confusion_matrix": [
+          [
+            2593,
+            3
+          ],
+          [
+            25,
+            8
+          ]
+        ],
+        "test_size": 2629,
+        "train_size": 10512
+      },
+      "model_type": "xgboost",
+      "model_path": "ml_models\\saved_models\\v4_20251204_002804.pkl",
+      "data_paths": {
+        "transactions": "C:\\Users\\bauka\\OneDrive\\Desktop\\ForteBank.AI\\csv\\транзакции в Мобильном интернет Банкинге.csv",
+        "behavioral": "C:\\Users\\bauka\\OneDrive\\Desktop\\ForteBank.AI\\csv\\поведенческие паттерны клиентов.csv"
+      },
+      "feature_count": 37
+    }
+  ],
+  "current_version": "v4_20251204_002804",
+  "last_training": "2025-12-04T00:28:04.904143"
+}

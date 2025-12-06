@@ -1,0 +1,973 @@
+{% extends "base.html" %}
+
+{% block title %}Fraud Detection - ML Модель{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Fraud Detection Specific Styles */
+    .fraud-detection-container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+
+    .page-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin: 0;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 4px 0 0 0;
+    }
+
+    .fraud-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        align-items: stretch;
+    }
+
+    .fraud-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-light);
+        display: flex;
+        flex-direction: column;
+        height: 600px;
+        min-height: 600px;
+    }
+
+    .fraud-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .fraud-card-wide {
+        grid-column: span 2;
+    }
+
+    .fraud-card-full-width {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    /* Медиа-запросы для карточек отключены - фиксированный размер 1920x1080 */
+
+    .card-header {
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+        border-bottom: 1px solid var(--border-light);
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-content {
+        padding: 1.5rem;
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .card-content::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .card-content::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
+    .card-content::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
+    }
+
+    /* Threshold Control */
+    .threshold-control {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .threshold-slider-wrapper {
+        position: relative;
+    }
+
+    #threshold-slider {
+        width: 100%;
+        height: 8px;
+        border-radius: 4px;
+        background: linear-gradient(to right, #10B981 0%, #F59E0B 50%, #EF4444 100%);
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    #threshold-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid var(--primary-color);
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s;
+    }
+
+    #threshold-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    #threshold-slider::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid var(--primary-color);
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .threshold-value-display {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0.5rem 0;
+    }
+
+    .threshold-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(139, 30, 45, 0.3);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+        background: var(--text-secondary);
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-large {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        width: 100%;
+    }
+
+    .btn-small {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    /* Statistics */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1.25rem 1rem;
+        background: var(--background-alt);
+        border-radius: 8px;
+        border: 2px solid var(--border-light);
+        transition: all 0.2s;
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .stat-item:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-color);
+        line-height: 1.2;
+        word-break: break-word;
+    }
+
+    .stat-item.stat-fraud .stat-value {
+        color: var(--security-red);
+    }
+
+    .stat-item.stat-safe .stat-value {
+        color: var(--security-green);
+    }
+
+    .stat-item.stat-percentage .stat-value {
+        color: var(--primary-color);
+    }
+
+    /* Fraud Table */
+    .fraud-table-container {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 500px;
+        border-radius: 8px;
+        border: 1px solid var(--border-light);
+    }
+
+    .fraud-table-container::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .fraud-table-container::-webkit-scrollbar-track {
+        background: var(--background-alt);
+    }
+
+    .fraud-table-container::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
+    }
+
+    .fraud-table-container::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
+    }
+
+    .fraud-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+
+    .fraud-table thead {
+        background: var(--background-alt);
+    }
+
+    .fraud-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-color);
+        border-bottom: 2px solid var(--border-light);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .fraud-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .fraud-row {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .fraud-row:hover {
+        background: var(--background-alt);
+    }
+
+    .fraud-row.high-risk {
+        border-left: 4px solid var(--security-red);
+    }
+
+    .fraud-row.medium-risk {
+        border-left: 4px solid var(--warning-color);
+    }
+
+    .fraud-row.low-risk {
+        border-left: 4px solid var(--security-green);
+    }
+
+    .probability-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .probability-badge.high-risk {
+        background: #FEE2E2;
+        color: #DC2626;
+    }
+
+    .probability-badge.medium-risk {
+        background: #FEF3C7;
+        color: #D97706;
+    }
+
+    .probability-badge.low-risk {
+        background: #D1FAE5;
+        color: #059669;
+    }
+
+    /* Transaction Detail */
+    .detail-card {
+        background: var(--background-alt);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-light);
+        max-height: 600px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .detail-card::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .detail-card::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .detail-card::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
+    .detail-card::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
+    }
+
+    .detail-card h4 {
+        margin: 0 0 1.5rem 0;
+        color: var(--text-color);
+        font-size: 1.25rem;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid var(--border-light);
+        transition: all 0.2s;
+    }
+
+    .detail-item:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .detail-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .detail-value {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    /* Explanation Styles */
+    .explanation-item {
+        transition: all 0.2s;
+    }
+
+    .explanation-item:hover {
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .risk-high {
+        color: var(--security-red);
+    }
+
+    .risk-medium {
+        color: var(--warning-color);
+    }
+
+    .risk-low {
+        color: var(--security-green);
+    }
+
+    /* Model Info */
+    .model-info-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        max-height: 400px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .model-info-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .model-info-container::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
+    .model-info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: var(--background-alt);
+        border-radius: 6px;
+        border: 1px solid var(--border-light);
+        transition: all 0.2s;
+    }
+
+    .model-info-item:hover {
+        border-color: var(--primary-color);
+        background: white;
+    }
+
+    .info-label {
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .status-loaded {
+        color: var(--security-green);
+    }
+
+    .status-not-loaded {
+        color: var(--security-red);
+    }
+
+    /* Placeholder */
+    .placeholder-text {
+        text-align: center;
+        color: var(--text-secondary);
+        padding: 2rem;
+        font-style: italic;
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--border-light);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .toast {
+        min-width: 300px;
+        max-width: 400px;
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slideInRight 0.3s ease;
+        background: white;
+        border-left: 4px solid;
+    }
+
+    .toast.success {
+        border-left-color: var(--security-green);
+    }
+
+    .toast.error {
+        border-left-color: var(--security-red);
+    }
+
+    .toast.warning {
+        border-left-color: var(--warning-color);
+    }
+
+    .toast.info {
+        border-left-color: var(--primary-color);
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .toast-icon {
+        font-size: 1.5rem;
+    }
+
+    .toast-message {
+        flex: 1;
+        font-weight: 500;
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        cursor: pointer;
+        color: var(--text-secondary);
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+        margin-top: 1rem;
+        display: none;
+    }
+
+    .progress-container.active {
+        display: block;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--border-light);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+        width: 0%;
+        transition: width 0.3s ease;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .progress-text {
+        margin-top: 0.5rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    /* Status Message */
+    .status-message {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 6px;
+        background: var(--background-alt);
+        border: 1px solid var(--border-light);
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state-text {
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-hint {
+        font-size: 0.875rem;
+        opacity: 0.7;
+    }
+
+    /* Фиксированный размер 1920x1080 - медиа-запросы отключены */
+
+    /* Search and Filter */
+    .table-controls {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: 200px;
+        padding: 0.75rem;
+        border: 1px solid var(--border-light);
+        border-radius: 6px;
+        font-size: 0.875rem;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(139, 30, 45, 0.1);
+    }
+
+    /* Fraud Chatbot Button - AI Assistant Style */
+    .fraud-chatbot-widget {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        z-index: 999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .fraud-chatbot-toggle {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+        position: relative;
+        text-decoration: none;
+    }
+
+    .fraud-chatbot-toggle:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+
+    .fraud-chatbot-icon {
+        font-size: 28px;
+    }
+
+    .fraud-chatbot-tooltip {
+        position: absolute;
+        bottom: 70px;
+        right: 0;
+        background: #1F2937;
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .fraud-chatbot-toggle:hover .fraud-chatbot-tooltip {
+        opacity: 1;
+    }
+
+    .fraud-chatbot-tooltip::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        right: 20px;
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid #1F2937;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fraud-detection-container">
+    <div class="page-header">
+        <div>
+            <h1>Fraud Detection - ML Модель</h1>
+            <p class="page-subtitle">Детекция мошеннических транзакций с использованием машинного обучения</p>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="fraud-cards-grid">
+        <!-- Порог управления -->
+        <div class="fraud-card">
+            <div class="card-header">
+                <h3>⚙️ Управление порогом</h3>
+            </div>
+            <div class="card-content">
+                <div class="threshold-control">
+                    <label for="threshold-slider" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                        Порог риска детекции
+                    </label>
+                    <div class="threshold-value-display" id="threshold-value">0.30</div>
+                    <div class="threshold-slider-wrapper">
+                        <input type="range" id="threshold-slider" min="0" max="1" step="0.01" value="0.3" 
+                               oninput="updateThresholdValue(this.value)">
+                    </div>
+                    <div class="threshold-info">
+                        <span>Низкий риск (0.0)</span>
+                        <span>Высокий риск (1.0)</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="updateThreshold()" id="threshold-btn">
+                        <span>💾</span> Применить порог
+                    </button>
+                    <div class="progress-container" id="threshold-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <div class="progress-text">Обновление порога...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Проверка транзакций -->
+        <div class="fraud-card">
+            <div class="card-header">
+                <h3>🔍 Проверка транзакций</h3>
+            </div>
+            <div class="card-content">
+                <div style="margin-bottom: 1rem;">
+                    <label for="max-transactions-input" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-secondary);">
+                        Максимум транзакций (оставьте пустым для всех):
+                    </label>
+                    <input 
+                        type="number" 
+                        id="max-transactions-input" 
+                        class="search-input" 
+                        placeholder="Все транзакции"
+                        min="1"
+                        style="width: 100%;"
+                    >
+                    <small style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.875rem;">
+                        💡 Оставьте пустым для проверки всех транзакций из файла
+                    </small>
+                </div>
+                <button class="btn btn-primary btn-large" onclick="checkAllTransactions()" id="check-btn">
+                    <span>📊</span> Проверить транзакции
+                </button>
+                <div id="check-status" class="status-message">
+                    <p class="placeholder-text" style="margin: 0;">Готов к проверке</p>
+                </div>
+                <div class="progress-container" id="check-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">Обработка данных...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="fraud-card">
+            <div class="card-header">
+                <h3>📈 Статистика</h3>
+            </div>
+            <div class="card-content">
+                <div id="statistics" class="statistics-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-text">Статистика появится после проверки</div>
+                        <div class="empty-state-hint">Нажмите "Проверить все транзакции"</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Информация о модели -->
+        <div class="fraud-card">
+            <div class="card-header">
+                <h3>🤖 Информация о модели</h3>
+            </div>
+            <div class="card-content">
+                <div id="model-info" class="model-info-container">
+                    <div class="loading-spinner"></div>
+                    <p style="text-align: center; color: var(--text-secondary); margin-top: 0.5rem;">Загрузка...</p>
+                </div>
+                <div id="model-metrics" style="margin-top: 1rem; display: none;">
+                    <!-- Метрики будут добавлены через JS -->
+                </div>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+                    <label for="model-type-select" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-secondary);">
+                        Тип модели:
+                    </label>
+                    <select id="model-type-select" class="search-input" style="width: 100%; margin-bottom: 0.5rem;">
+                        <option value="xgboost">XGBoost</option>
+                        <option value="lightgbm">LightGBM</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="retrainModel()" id="retrain-btn" style="width: 100%;">
+                        <span>🔄</span> Переобучить модель
+                    </button>
+                    <div class="progress-container" id="retrain-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <div class="progress-text">Обучение модели...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Мошеннические транзакции -->
+        <div class="fraud-card fraud-card-wide">
+            <div class="card-header">
+                <h3>⚠️ Мошеннические транзакции</h3>
+            </div>
+            <div class="card-content">
+                <div class="table-controls" id="table-controls" style="display: none;">
+                    <input type="text" class="search-input" id="search-input" placeholder="🔍 Поиск по ID, клиенту, сумме..." onkeyup="filterTable()">
+                    <select class="search-input" id="risk-filter" onchange="filterTable()" style="max-width: 200px;">
+                        <option value="">Все уровни риска</option>
+                        <option value="high">Высокий риск</option>
+                        <option value="medium">Средний риск</option>
+                        <option value="low">Низкий риск</option>
+                    </select>
+                </div>
+                <div id="fraud-list" class="fraud-list-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <div class="empty-state-text">Список транзакций появится после проверки</div>
+                        <div class="empty-state-hint">Нажмите "Проверить все транзакции" для начала анализа</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Детали транзакции -->
+        <div class="fraud-card fraud-card-full-width">
+            <div class="card-header">
+                <h3>📋 Детали транзакции</h3>
+            </div>
+            <div class="card-content">
+                <div id="transaction-detail" class="transaction-detail-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <div class="empty-state-text">Выберите транзакцию из списка</div>
+                        <div class="empty-state-hint">Кликните на транзакцию для просмотра деталей</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fraud Chatbot Widget Button -->
+<div class="fraud-chatbot-widget">
+    <a href="{{ url_for('fraud_chatbot') }}" class="fraud-chatbot-toggle">
+        <span class="fraud-chatbot-icon">🤖</span>
+        <span class="fraud-chatbot-tooltip">Чатбот о мошенничестве</span>
+    </a>
+</div>
+
+<script src="{{ url_for('static', filename='js/fraud_detection.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}Confluence Documents - HelpDesk{% endblock %}
+
+{% block content %}
+<div class="confluence-container">
+    <div class="confluence-header">
+        <div class="confluence-header-left">
+            <div class="confluence-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            </div>
+            <div>
+                <h1 class="confluence-title">Confluence Documents</h1>
+                <p class="confluence-subtitle">Локальное хранилище документов</p>
+            </div>
+        </div>
+        <button class="confluence-btn-primary" onclick="window.location.href='{{ url_for('ai_business_analyst') }}'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Создать новый документ
+        </button>
+    </div>
+
+    <div class="confluence-filters">
+        <input type="text" id="search-input" class="confluence-search" placeholder="Поиск по названию, пространству..." onkeyup="filterDocuments()">
+        <select id="space-filter" class="confluence-filter" onchange="filterDocuments()">
+            <option value="">Все пространства</option>
+        </select>
+    </div>
+
+    <div class="confluence-docs-grid" id="documents-grid">
+        <div class="confluence-loading">Загрузка документов...</div>
+    </div>
+
+    <div id="empty-state" class="confluence-empty" style="display: none;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #9ca3af; margin-bottom: 1rem;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <h3>Нет документов</h3>
+        <p>Создайте первый документ в AI Business Analyst</p>
+        <button class="confluence-btn-primary" onclick="window.location.href='{{ url_for('ai_business_analyst') }}'">
+            Создать документ
+        </button>
+    </div>
+</div>
+
+<!-- Modal for viewing document -->
+<div id="doc-modal" class="confluence-modal" style="display: none;">
+    <div class="confluence-modal-content">
+        <div class="confluence-modal-header">
+            <h2 id="modal-title">Документ</h2>
+            <button onclick="closeDocumentModal()" class="confluence-modal-close">×</button>
+        </div>
+        <div class="confluence-modal-body" id="modal-body">
+            <!-- Document content will be loaded here -->
+        </div>
+        <div class="confluence-modal-footer">
+            <button onclick="closeDocumentModal()" class="confluence-btn-secondary">Закрыть</button>
+            <button onclick="deleteCurrentDocument()" class="confluence-btn-danger">Удалить</button>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/confluence_docs.js') }}"></script>
+
+<style>
+.confluence-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.confluence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.confluence-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.confluence-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.confluence-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.confluence-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 4px 0 0 0;
+}
+
+.confluence-btn-primary {
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, #A52A2A 0%, #8B1E2D 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(165, 42, 42, 0.3);
+}
+
+.confluence-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(165, 42, 42, 0.4);
+}
+
+.confluence-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.confluence-search {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.confluence-search:focus {
+    outline: none;
+    border-color: #A52A2A;
+    box-shadow: 0 0 0 3px rgba(165, 42, 42, 0.1);
+}
+
+.confluence-filter {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: white;
+    cursor: pointer;
+}
+
+.confluence-docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.confluence-doc-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.confluence-doc-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.confluence-doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.confluence-doc-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 0.5rem 0;
+}
+
+.confluence-doc-space {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #fce4e4;
+    color: #8B1E2D;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.confluence-doc-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.confluence-loading, .confluence-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+}
+
+.confluence-empty h3 {
+    color: #1a1a1a;
+    margin: 1rem 0 0.5rem 0;
+}
+
+.confluence-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.confluence-modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.confluence-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.confluence-modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #1a1a1a;
+}
+
+.confluence-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #6b7280;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.confluence-modal-close:hover {
+    background: #f3f4f6;
+}
+
+.confluence-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.confluence-modal-footer {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.confluence-btn-secondary {
+    padding: 0.625rem 1.5rem;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.confluence-btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+.confluence-btn-danger {
+    padding: 0.625rem 1.5rem;
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.confluence-btn-danger:hover {
+    background: #fecaca;
+}
+</style>
+{% endblock %}
+

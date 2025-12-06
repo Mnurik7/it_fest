@@ -1,0 +1,34 @@
+[
+  {
+    "id": "BA_20251204_035104",
+    "title": "Анализ отклоненных кредитных заявок для улучшения скоринговых моделей",
+    "space_key": "BA",
+    "created_at": "2025-12-04T03:51:04.050708",
+    "created_by": "admin",
+    "type": "BRD"
+  },
+  {
+    "id": "BA_20251204_031700",
+    "title": "Business Requirements Document",
+    "space_key": "BA",
+    "created_at": "2025-12-04T03:17:00.894843",
+    "created_by": "admin",
+    "type": "BRD"
+  },
+  {
+    "id": "BA_20251201_172506",
+    "title": "ИИ агент",
+    "space_key": "BA",
+    "created_at": "2025-12-01T17:25:06.150122",
+    "created_by": "admin",
+    "type": "BRD"
+  },
+  {
+    "id": "BA_20251128_093516",
+    "title": "LookapAi",
+    "space_key": "BA",
+    "created_at": "2025-11-28T09:35:16.443333",
+    "created_by": "admin",
+    "type": "BRD"
+  }
+]

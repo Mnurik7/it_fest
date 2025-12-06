@@ -1,0 +1,907 @@
+{
+  "transactions": [
+    {
+      "id": 1,
+      "sender_id": "user6057",
+      "receiver_id": "user3813",
+      "amount": 42077.81,
+      "currency": "KZT",
+      "comment": "Оплата за услуги",
+      "timestamp": "2025-11-12T00:09:57.587431"
+    },
+    {
+      "id": 2,
+      "sender_id": "user5387",
+      "receiver_id": "user7529",
+      "amount": 30922.72,
+      "currency": "KZT",
+      "comment": "Перевод за подарок",
+      "timestamp": "2025-10-30T00:09:57.587563"
+    },
+    {
+      "id": 3,
+      "sender_id": "user8166",
+      "receiver_id": "user4904",
+      "amount": 5061.13,
+      "currency": "KZT",
+      "comment": "Оплата за ремонт",
+      "timestamp": "2025-11-24T00:09:57.587606"
+    },
+    {
+      "id": 4,
+      "sender_id": "fraudster3",
+      "receiver_id": "user4904",
+      "amount": 16118.93,
+      "currency": "KZT",
+      "comment": "Банк требует подтверждения, переведите на безопасный счёт",
+      "timestamp": "2025-11-02T00:09:57.587854"
+    },
+    {
+      "id": 5,
+      "sender_id": "user1332",
+      "receiver_id": "user5528",
+      "amount": 22998.07,
+      "currency": "KZT",
+      "comment": "Перевод за аренду",
+      "timestamp": "2025-11-22T00:09:57.587359"
+    },
+    {
+      "id": 6,
+      "sender_id": "user4649",
+      "receiver_id": "user4904",
+      "amount": 36074.23,
+      "currency": "KZT",
+      "comment": "Перевод за покупку",
+      "timestamp": "2025-11-13T00:09:57.587418"
+    },
+    {
+      "id": 7,
+      "sender_id": "fraudster3",
+      "receiver_id": "user4904",
+      "amount": 51365.05,
+      "currency": "KZT",
+      "comment": "Мы из банка, с вашей карты пытаются списать деньги, подтвердите перевод",
+      "timestamp": "2025-11-28T00:09:57.587846"
+    },
+    {
+      "id": 8,
+      "sender_id": "user3061",
+      "receiver_id": "user2848",
+      "amount": 46851.67,
+      "currency": "KZT",
+      "comment": "Перевод за продукты",
+      "timestamp": "2025-11-13T00:09:57.587523"
+    },
+    {
+      "id": 9,
+      "sender_id": "user4649",
+      "receiver_id": "user2540",
+      "amount": 2348.08,
+      "currency": "KZT",
+      "comment": "Оплата товара",
+      "timestamp": "2025-11-03T00:09:57.587480"
+    },
+    {
+      "id": 10,
+      "sender_id": "user9487",
+      "receiver_id": "user3701",
+      "amount": 25989.76,
+      "currency": "KZT",
+      "comment": "Перевод за покупку",
+      "timestamp": "2025-11-05T00:09:57.587599"
+    },
+    {
+      "id": 11,
+      "sender_id": "user3007",
+      "receiver_id": "user6425",
+      "amount": 18491.85,
+      "currency": "KZT",
+      "comment": "ошибся с номером, верните деньги",
+      "timestamp": "2025-11-03T00:09:57.587742"
+    },
+    {
+      "id": 12,
+      "sender_id": "user7647",
+      "receiver_id": "user1025",
+      "amount": 8459.79,
+      "currency": "KZT",
+      "comment": "Оплата за ремонт",
+      "timestamp": "2025-11-08T00:09:57.587380"
+    },
+    {
+      "id": 13,
+      "sender_id": "user8166",
+      "receiver_id": "user7605",
+      "amount": 36658.65,
+      "currency": "KZT",
+      "comment": "Оплата за ремонт",
+      "timestamp": "2025-10-31T00:09:57.587296"
+    },
+    {
+      "id": 14,
+      "sender_id": "user2661",
+      "receiver_id": "user5839",
+      "amount": 1836.05,
+      "currency": "KZT",
+      "comment": "Оплата за работу",
+      "timestamp": "2025-11-01T00:09:57.587320"
+    },
+    {
+      "id": 15,
+      "sender_id": "user3913",
+      "receiver_id": "user5788",
+      "amount": 13978.03,
+      "currency": "KZT",
+      "comment": "Оплата за работу",
+      "timestamp": "2025-11-28T00:09:57.587396"
+    },
+    {
+      "id": 16,
+      "sender_id": "user6809",
+      "receiver_id": "user2540",
+      "amount": 1693.84,
+      "currency": "KZT",
+      "comment": "Оплата за работу",
+      "timestamp": "2025-11-10T00:09:57.587447"
+    },
+    {
+      "id": 17,
+      "sender_id": "fraudster3",
+      "receiver_id": "user6294",
+      "amount": 66782.82,
+      "currency": "KZT",
+      "comment": "Подтвердите перевод, с вашей карты пытаются списать деньги",
+      "timestamp": "2025-11-26T00:09:57.587895"
+    },
+    {
+      "id": 18,
+      "sender_id": "user7406",
+      "receiver_id": "user6481",
+      "amount": 33790.63,
+      "currency": "KZT",
+      "comment": "Оплата за ремонт",
+      "timestamp": "2025-10-31T00:09:57.587464"
+    },
+    {
+      "id": 19,
+      "sender_id": "user6479",
+      "receiver_id": "user6425",
+      "amount": 49516.19,
+      "currency": "KZT",
+      "comment": "Оплата за услуги",
+      "timestamp": "2025-11-28T00:09:57.587493"
+    },
+    {
+      "id": 20,
+      "sender_id": "user3913",
+      "receiver_id": "user3986",
+      "amount": 15419.11,
+      "currency": "KZT",
+      "comment": "Перевод за продукты",
+      "timestamp": "2025-11-27T00:09:57.587558"
+    },
+    {
+      "id": 21,
+      "sender_id": "user6057",
+      "receiver_id": "user3986",
+      "amount": 19517.96,
+      "currency": "KZT",
+      "comment": "Оплата товара",
+      "timestamp": "2025-11-07T00:09:57.587331"
+    },
+    {
+      "id": 22,
+      "sender_id": "user1332",
+      "receiver_id": "user7529",
+      "amount": 5935.06,
+      "currency": "KZT",
+      "comment": "Оплата за работу",
+      "timestamp": "2025-11-09T00:09:57.587511"
+    },
+    {
+      "id": 23,
+      "sender_id": "user6479",
+      "receiver_id": "user2457",
+      "amount": 8309.07,
+      "currency": "KZT",
+      "comment": "ошибся с номером, верните деньги",
+      "timestamp": "2025-11-06T00:09:57.587711"
+    },
+    {
+      "id": 24,
+      "sender_id": "user8959",
+      "receiver_id": "user5784",
+      "amount": 46424.67,
+      "currency": "KZT",
+      "comment": "Перевод за аренду",
+      "timestamp": "2025-11-05T00:09:57.587580"
+    },
+    {
+      "id": 25,
+      "sender_id": "user1211",
+      "receiver_id": "user5867",
+      "amount": 9796.81,
+      "currency": "KZT",
+      "comment": "Перевод за подарок",
+      "timestamp": "2025-11-21T00:09:57.587354"
+    },
+    {
+      "id": 26,
+      "sender_id": "user4649",
+      "receiver_id": "user3046",
+      "amount": 17992.57,
+      "currency": "KZT",
+      "comment": "ошибся с номером, верните деньги",
+      "timestamp": "2025-11-03T00:09:57.587769"
+    },
+    {
+      "id": 27,
+      "sender_id": "user4841",
+      "receiver_id": "user1681",
+      "amount": 17468.6,
+      "currency": "KZT",
+      "comment": "я случайно скинул вам 5000тг, можете отправить обратно",
+      "timestamp": "2025-11-05T00:09:57.587781"
+    },
+    {
+      "id": 28,
+      "sender_id": "user7591",
+      "receiver_id": "user7546",
+      "amount": 23923.55,
+      "currency": "KZT",
+      "comment": "Оплата за услуги",
+      "timestamp": "2025-11-26T00:09:57.587413"
+    },
+    {
+      "id": 29,
+      "sender_id": "user5119",
+      "receiver_id": "user2457",
+      "amount": 4180.19,
+      "currency": "KZT",
+      "comment": "я случайно скинул вам 5000тг, можете отправить обратно",
+      "timestamp": "2025-11-23T00:09:57.587775"
+    },
+    {
+      "id": 30,
+      "sender_id": "suspicious4",
+      "receiver_id": "user7147",
+      "amount": 12888.69,
+      "currency": "KZT",
+      "comment": "случайный перевод, верните пожалуйста",
+      "timestamp": "2025-11-27T00:09:57.587682"
+    },
+    {
+      "id": 31,
+      "sender_id": "suspicious1",
+      "receiver_id": "user3986",
+      "amount": 13547.02,
+      "currency": "KZT",
+      "comment": "я случайно скинул вам 5000тг, можете отправить обратно",
+      "timestamp": "2025-11-07T00:09:57.587661"
+    },
+    {
+      "id": 32,
+      "sender_id": "suspicious1",
+      "receiver_id": "user6425",
+      "amount": 6213.62,
+      "currency": "KZT",
+      "comment": "ошибочно перевел деньги, верните пожалуйста",
+      "timestamp": "2025-11-01T00:09:57.587699"
+    },
+    {
+      "id": 33,
+      "sender_id": "user4841",
+      "receiver_id": "user4904",
+      "amount": 10266.48,
+      "currency": "KZT",
+      "comment": "случайный перевод, верните пожалуйста",
+      "timestamp": "2025-11-13T00:09:57.587758"
+    },
+    {
+      "id": 34,
+      "sender_id": "user7647",
+      "receiver_id": "user4496",
+      "amount": 48249.97,
+      "currency": "KZT",
+      "comment": "Перевод другу",
+      "timestamp": "2025-10-31T00:09:57.587517"
+    },
+    {
+      "id": 35,
+      "sender_id": "user3913",
+      "receiver_id": "user3701",
+      "amount": 1442.81,
+      "currency": "KZT",
+      "comment": "Перевод за продукты",
+      "timestamp": "2025-11-24T00:09:57.587569"
+    },
+    {
+      "id": 36,
+      "sender_id": "suspicious1",
+      "receiver_id": "user9624",
+      "amount": 11508.07,
+      "currency": "KZT",
+      "comment": "неправильно перевел, отдайте обратно",
+      "timestamp": "2025-11-02T00:09:57.587645"
+    },
+    {
+      "id": 37,
+      "sender_id": "user4649",
+      "receiver_id": "user1193",
+      "amount": 4992.82,
+      "currency": "KZT",
+      "comment": "Перевод за продукты",
+      "timestamp": "2025-11-05T00:09:57.587391"
+    },
+    {
+      "id": 38,
+      "sender_id": "fraudster3",
+      "receiver_id": "user8045",
+      "amount": 96253.09,
+      "currency": "KZT",
+      "comment": "Банк требует подтверждения, переведите на безопасный счёт",
+      "timestamp": "2025-11-21T00:09:57.587829"
+    },
+    {
+      "id": 39,
+      "sender_id": "user8959",
+      "receiver_id": "user5788",
+      "amount": 2728.33,
+      "currency": "KZT",
+      "comment": "ошибочно перевёл, верните деньги",
+      "timestamp": "2025-11-20T00:09:57.587764"
+    },
+    {
+      "id": 40,
+      "sender_id": "user5119",
+      "receiver_id": "user2457",
+      "amount": 32179.16,
+      "currency": "KZT",
+      "comment": "Оплата за ремонт",
+      "timestamp": "2025-11-08T00:09:57.587594"
+    },
+    {
+      "id": 41,
+      "sender_id": "user5119",
+      "receiver_id": "user5867",
+      "amount": 3483.66,
+      "currency": "KZT",
+      "comment": "я случайно скинул, можете отправить обратно",
+      "timestamp": "2025-11-23T00:09:57.587736"
+    },
+    {
+      "id": 42,
+      "sender_id": "fraudster3",
+      "receiver_id": "user1193",
+      "amount": 23588.89,
+      "currency": "KZT",
+      "comment": "Мы из банка, разблокируйте карту, переведите на безопасный счет",
+      "timestamp": "2025-10-30T00:09:57.587841"
+    },
+    {
+      "id": 43,
+      "sender_id": "user1008",
+      "receiver_id": "user1025",
+      "amount": 27889.38,
+      "currency": "KZT",
+      "comment": "Оплата за ремонт",
+      "timestamp": "2025-11-04T00:09:57.587408"
+    },
+    {
+      "id": 44,
+      "sender_id": "user4091",
+      "receiver_id": "user6218",
+      "amount": 48409.51,
+      "currency": "KZT",
+      "comment": "Перевод за подарок",
+      "timestamp": "2025-11-09T00:09:57.587546"
+    },
+    {
+      "id": 45,
+      "sender_id": "user1198",
+      "receiver_id": "user7196",
+      "amount": 26840.3,
+      "currency": "KZT",
+      "comment": "Оплата за ремонт",
+      "timestamp": "2025-11-12T00:09:57.587506"
+    },
+    {
+      "id": 46,
+      "sender_id": "fraudster3",
+      "receiver_id": "user3701",
+      "amount": 63110.44,
+      "currency": "KZT",
+      "comment": "Банк требует подтверждения, переведите на безопасный счёт",
+      "timestamp": "2025-11-20T00:09:57.587878"
+    },
+    {
+      "id": 47,
+      "sender_id": "user2467",
+      "receiver_id": "user3701",
+      "amount": 41047.7,
+      "currency": "KZT",
+      "comment": "Оплата за работу",
+      "timestamp": "2025-11-26T00:09:57.587442"
+    },
+    {
+      "id": 48,
+      "sender_id": "suspicious5",
+      "receiver_id": "user3813",
+      "amount": 11742.63,
+      "currency": "KZT",
+      "comment": "случайный перевод, верните пожалуйста",
+      "timestamp": "2025-10-31T00:09:57.587688"
+    },
+    {
+      "id": 49,
+      "sender_id": "user1008",
+      "receiver_id": "user6965",
+      "amount": 28155.87,
+      "currency": "KZT",
+      "comment": "Оплата товара",
+      "timestamp": "2025-11-10T00:09:57.587535"
+    },
+    {
+      "id": 50,
+      "sender_id": "user2661",
+      "receiver_id": "user7196",
+      "amount": 9662.03,
+      "currency": "KZT",
+      "comment": "Перевод за подарок",
+      "timestamp": "2025-11-17T00:09:57.587551"
+    },
+    {
+      "id": 51,
+      "sender_id": "user6479",
+      "receiver_id": "user7147",
+      "amount": 38919.46,
+      "currency": "KZT",
+      "comment": "Перевод за подарок",
+      "timestamp": "2025-11-23T00:09:57.587314"
+    },
+    {
+      "id": 52,
+      "sender_id": "suspicious1",
+      "receiver_id": "user6481",
+      "amount": 17055.24,
+      "currency": "KZT",
+      "comment": "случайный перевод, верните пожалуйста",
+      "timestamp": "2025-11-25T00:09:57.587666"
+    },
+    {
+      "id": 53,
+      "sender_id": "user5119",
+      "receiver_id": "user6294",
+      "amount": 27122.61,
+      "currency": "KZT",
+      "comment": "Оплата за услуги",
+      "timestamp": "2025-11-25T00:09:57.587623"
+    },
+    {
+      "id": 54,
+      "sender_id": "user1008",
+      "receiver_id": "user4904",
+      "amount": 40482.82,
+      "currency": "KZT",
+      "comment": "Оплата товара",
+      "timestamp": "2025-11-12T00:09:57.587574"
+    },
+    {
+      "id": 55,
+      "sender_id": "fraudster3",
+      "receiver_id": "user7546",
+      "amount": 67846.48,
+      "currency": "KZT",
+      "comment": "Мы из банка, с вашей карты пытаются списать деньги, подтвердите перевод",
+      "timestamp": "2025-11-17T00:09:57.587884"
+    },
+    {
+      "id": 56,
+      "sender_id": "suspicious4",
+      "receiver_id": "user2848",
+      "amount": 16783.14,
+      "currency": "KZT",
+      "comment": "случайный перевод, верните пожалуйста",
+      "timestamp": "2025-10-30T00:09:57.587672"
+    },
+    {
+      "id": 57,
+      "sender_id": "fraudster3",
+      "receiver_id": "user3813",
+      "amount": 69363.57,
+      "currency": "KZT",
+      "comment": "Мы из банка, с вашей карты пытаются списать деньги, подтвердите перевод",
+      "timestamp": "2025-11-22T00:09:57.587824"
+    },
+    {
+      "id": 58,
+      "sender_id": "user8166",
+      "receiver_id": "user3046",
+      "amount": 24982.16,
+      "currency": "KZT",
+      "comment": "Оплата за обучение",
+      "timestamp": "2025-11-17T00:09:57.587488"
+    },
+    {
+      "id": 59,
+      "sender_id": "user5724",
+      "receiver_id": "user7546",
+      "amount": 4443.04,
+      "currency": "KZT",
+      "comment": "Оплата товара",
+      "timestamp": "2025-11-21T00:09:57.587469"
+    },
+    {
+      "id": 60,
+      "sender_id": "fraudster3",
+      "receiver_id": "user9624",
+      "amount": 14661.6,
+      "currency": "KZT",
+      "comment": "Мы из банка, с вашей карты пытаются списать деньги, подтвердите перевод",
+      "timestamp": "2025-10-31T00:09:57.587867"
+    },
+    {
+      "id": 61,
+      "sender_id": "user1211",
+      "receiver_id": "user4904",
+      "amount": 37393.91,
+      "currency": "KZT",
+      "comment": "Перевод за аренду",
+      "timestamp": "2025-11-22T00:09:57.587458"
+    },
+    {
+      "id": 62,
+      "sender_id": "user9256",
+      "receiver_id": "user7546",
+      "amount": 5048.43,
+      "currency": "KZT",
+      "comment": "Перевод за покупку",
+      "timestamp": "2025-11-15T00:09:57.587337"
+    },
+    {
+      "id": 63,
+      "sender_id": "user6596",
+      "receiver_id": "user1025",
+      "amount": 38725.66,
+      "currency": "KZT",
+      "comment": "Оплата за работу",
+      "timestamp": "2025-11-16T00:09:57.587287"
+    },
+    {
+      "id": 64,
+      "sender_id": "user3007",
+      "receiver_id": "user5867",
+      "amount": 12685.97,
+      "currency": "KZT",
+      "comment": "Оплата за работу",
+      "timestamp": "2025-11-11T00:09:57.587342"
+    },
+    {
+      "id": 65,
+      "sender_id": "user4649",
+      "receiver_id": "user7529",
+      "amount": 33650.55,
+      "currency": "KZT",
+      "comment": "Перевод другу",
+      "timestamp": "2025-11-19T00:09:57.587541"
+    },
+    {
+      "id": 66,
+      "sender_id": "user3061",
+      "receiver_id": "user4904",
+      "amount": 8501.91,
+      "currency": "KZT",
+      "comment": "ошибся с номером, верните деньги",
+      "timestamp": "2025-11-18T00:09:57.587748"
+    },
+    {
+      "id": 67,
+      "sender_id": "user4361",
+      "receiver_id": "user3701",
+      "amount": 9405.52,
+      "currency": "KZT",
+      "comment": "я случайно скинул, можете отправить обратно",
+      "timestamp": "2025-11-23T00:09:57.587798"
+    },
+    {
+      "id": 68,
+      "sender_id": "user2661",
+      "receiver_id": "user3813",
+      "amount": 18927.0,
+      "currency": "KZT",
+      "comment": "Перевод за покупку",
+      "timestamp": "2025-11-12T00:09:57.587365"
+    },
+    {
+      "id": 69,
+      "sender_id": "user1008",
+      "receiver_id": "user5867",
+      "amount": 13649.61,
+      "currency": "KZT",
+      "comment": "я случайно скинул, можете отправить обратно",
+      "timestamp": "2025-11-23T00:09:57.587792"
+    },
+    {
+      "id": 70,
+      "sender_id": "user1008",
+      "receiver_id": "user6294",
+      "amount": 47039.29,
+      "currency": "KZT",
+      "comment": "Перевод за покупку",
+      "timestamp": "2025-11-06T00:09:57.587453"
+    },
+    {
+      "id": 71,
+      "sender_id": "fraudster3",
+      "receiver_id": "user7605",
+      "amount": 70887.95,
+      "currency": "KZT",
+      "comment": "Мы из банка, с вашей карты пытаются списать деньги, подтвердите перевод",
+      "timestamp": "2025-11-17T00:09:57.587873"
+    },
+    {
+      "id": 72,
+      "sender_id": "suspicious4",
+      "receiver_id": "user6218",
+      "amount": 8379.6,
+      "currency": "KZT",
+      "comment": "ошибочно перевел деньги, верните пожалуйста",
+      "timestamp": "2025-11-16T00:09:57.587654"
+    },
+    {
+      "id": 73,
+      "sender_id": "user6909",
+      "receiver_id": "user5784",
+      "amount": 8979.54,
+      "currency": "KZT",
+      "comment": "Оплата товара",
+      "timestamp": "2025-11-04T00:09:57.587308"
+    },
+    {
+      "id": 74,
+      "sender_id": "suspicious4",
+      "receiver_id": "user9624",
+      "amount": 12255.65,
+      "currency": "KZT",
+      "comment": "я случайно скинул, можете отправить обратно",
+      "timestamp": "2025-10-30T00:09:57.587694"
+    },
+    {
+      "id": 75,
+      "sender_id": "user8166",
+      "receiver_id": "user2457",
+      "amount": 14448.77,
+      "currency": "KZT",
+      "comment": "ошибочно перевёл, верните деньги",
+      "timestamp": "2025-11-23T00:09:57.587729"
+    },
+    {
+      "id": 76,
+      "sender_id": "user6479",
+      "receiver_id": "user4904",
+      "amount": 2621.51,
+      "currency": "KZT",
+      "comment": "Оплата за обучение",
+      "timestamp": "2025-11-12T00:09:57.587586"
+    },
+    {
+      "id": 77,
+      "sender_id": "user9487",
+      "receiver_id": "user6218",
+      "amount": 6396.15,
+      "currency": "KZT",
+      "comment": "Перевод за аренду",
+      "timestamp": "2025-11-01T00:09:57.587385"
+    },
+    {
+      "id": 78,
+      "sender_id": "user2467",
+      "receiver_id": "user2848",
+      "amount": 17731.88,
+      "currency": "KZT",
+      "comment": "Оплата за ремонт",
+      "timestamp": "2025-11-06T00:09:57.587224"
+    },
+    {
+      "id": 79,
+      "sender_id": "user7591",
+      "receiver_id": "user3701",
+      "amount": 14735.07,
+      "currency": "KZT",
+      "comment": "Перевод за аренду",
+      "timestamp": "2025-11-22T00:09:57.587475"
+    },
+    {
+      "id": 80,
+      "sender_id": "user3061",
+      "receiver_id": "user5603",
+      "amount": 46901.46,
+      "currency": "KZT",
+      "comment": "Оплата за услуги",
+      "timestamp": "2025-11-06T00:09:57.587617"
+    },
+    {
+      "id": 81,
+      "sender_id": "user1022",
+      "receiver_id": "user2457",
+      "amount": 20205.75,
+      "currency": "KZT",
+      "comment": "Оплата за обучение",
+      "timestamp": "2025-11-23T00:09:57.587436"
+    },
+    {
+      "id": 82,
+      "sender_id": "user4649",
+      "receiver_id": "user3813",
+      "amount": 33401.35,
+      "currency": "KZT",
+      "comment": "Оплата за работу",
+      "timestamp": "2025-11-05T00:09:57.587500"
+    },
+    {
+      "id": 83,
+      "sender_id": "user6809",
+      "receiver_id": "user3813",
+      "amount": 34338.87,
+      "currency": "KZT",
+      "comment": "Оплата за обучение",
+      "timestamp": "2025-11-26T00:09:57.587348"
+    },
+    {
+      "id": 84,
+      "sender_id": "user6596",
+      "receiver_id": "user5528",
+      "amount": 16799.35,
+      "currency": "KZT",
+      "comment": "Оплата за ремонт",
+      "timestamp": "2025-11-19T00:09:57.587402"
+    },
+    {
+      "id": 85,
+      "sender_id": "user7647",
+      "receiver_id": "user2540",
+      "amount": 17897.33,
+      "currency": "KZT",
+      "comment": "Оплата за обучение",
+      "timestamp": "2025-11-19T00:09:57.587629"
+    },
+    {
+      "id": 86,
+      "sender_id": "fraudster3",
+      "receiver_id": "user1681",
+      "amount": 10817.33,
+      "currency": "KZT",
+      "comment": "Подтвердите перевод, с вашей карты пытаются списать деньги",
+      "timestamp": "2025-11-09T00:09:57.587889"
+    },
+    {
+      "id": 87,
+      "sender_id": "user4361",
+      "receiver_id": "user4904",
+      "amount": 40439.01,
+      "currency": "KZT",
+      "comment": "Оплата за работу",
+      "timestamp": "2025-11-19T00:09:57.587424"
+    },
+    {
+      "id": 88,
+      "sender_id": "user5119",
+      "receiver_id": "user1025",
+      "amount": 24105.38,
+      "currency": "KZT",
+      "comment": "Оплата за ремонт",
+      "timestamp": "2025-11-08T00:09:57.587326"
+    },
+    {
+      "id": 89,
+      "sender_id": "fraudster3",
+      "receiver_id": "user8045",
+      "amount": 24362.4,
+      "currency": "KZT",
+      "comment": "Служба безопасности банка требует подтверждения перевода",
+      "timestamp": "2025-11-18T00:09:57.587817"
+    },
+    {
+      "id": 90,
+      "sender_id": "user8166",
+      "receiver_id": "user1681",
+      "amount": 34250.0,
+      "currency": "KZT",
+      "comment": "Перевод за подарок",
+      "timestamp": "2025-11-16T00:09:57.587302"
+    },
+    {
+      "id": 91,
+      "sender_id": "fraudster3",
+      "receiver_id": "user1025",
+      "amount": 23473.44,
+      "currency": "KZT",
+      "comment": "Переведите на безопасный счет, ваша карта заблокирована",
+      "timestamp": "2025-11-20T00:09:57.587860"
+    },
+    {
+      "id": 92,
+      "sender_id": "user5119",
+      "receiver_id": "user2848",
+      "amount": 11946.04,
+      "currency": "KZT",
+      "comment": "я случайно скинул вам, верните пожалуйста",
+      "timestamp": "2025-11-01T00:09:57.587716"
+    },
+    {
+      "id": 93,
+      "sender_id": "user1198",
+      "receiver_id": "user4904",
+      "amount": 31282.53,
+      "currency": "KZT",
+      "comment": "Оплата за обучение",
+      "timestamp": "2025-11-09T00:09:57.587370"
+    },
+    {
+      "id": 94,
+      "sender_id": "user4649",
+      "receiver_id": "user7147",
+      "amount": 44303.03,
+      "currency": "KZT",
+      "comment": "Оплата товара",
+      "timestamp": "2025-11-28T00:09:57.587611"
+    },
+    {
+      "id": 95,
+      "sender_id": "fraudster3",
+      "receiver_id": "user6425",
+      "amount": 56440.55,
+      "currency": "KZT",
+      "comment": "Подтвердите перевод, с вашей карты пытаются списать деньги",
+      "timestamp": "2025-11-01T00:09:57.587809"
+    },
+    {
+      "id": 96,
+      "sender_id": "suspicious1",
+      "receiver_id": "user7546",
+      "amount": 4263.4,
+      "currency": "KZT",
+      "comment": "ошибся с номером, верните деньги",
+      "timestamp": "2025-11-02T00:09:57.587705"
+    },
+    {
+      "id": 97,
+      "sender_id": "user6809",
+      "receiver_id": "user5788",
+      "amount": 42399.91,
+      "currency": "KZT",
+      "comment": "Оплата за обучение",
+      "timestamp": "2025-11-25T00:09:57.587529"
+    },
+    {
+      "id": 98,
+      "sender_id": "user4841",
+      "receiver_id": "user4496",
+      "amount": 2217.01,
+      "currency": "KZT",
+      "comment": "неправильно перевел, отдайте обратно",
+      "timestamp": "2025-11-11T00:09:57.587722"
+    },
+    {
+      "id": 99,
+      "sender_id": "user3007",
+      "receiver_id": "user9624",
+      "amount": 13789.47,
+      "currency": "KZT",
+      "comment": "неправильно перевел, отдайте обратно",
+      "timestamp": "2025-11-20T00:09:57.587786"
+    },
+    {
+      "id": 100,
+      "sender_id": "fraudster3",
+      "receiver_id": "user9624",
+      "amount": 12657.9,
+      "currency": "KZT",
+      "comment": "Срочно подтвердите перевод, банк требует подтверждения",
+      "timestamp": "2025-11-22T00:09:57.587835"
+    }
+  ],
+  "total": 100,
+  "generated_at": "2025-11-28T00:09:57.589159",
+  "description": "100 транзакций для анализа антифрод системой"
+}

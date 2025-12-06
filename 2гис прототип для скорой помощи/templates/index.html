@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта Алматы - Медицинские учреждения</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey={{ yandex_maps_api_key }}&lang=ru_RU" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗺️ Карта медицинских учреждений Алматы</h1>
+            <div class="controls">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Поиск по адресу или названию...">
+                    <button id="searchBtn">🔍 Поиск</button>
+                </div>
+                <div class="filter-box">
+                    <select id="typeFilter">
+                        <option value="">Все типы</option>
+                    </select>
+                </div>
+                <button id="chatBotBtn" class="chatbot-btn">🤖 Чат-бот скорой помощи</button>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h2>Типы учреждений</h2>
+                <div id="typeButtons" class="type-buttons"></div>
+                <div class="results-section">
+                    <h3>Результаты поиска</h3>
+                    <div id="resultsList" class="results-list"></div>
+                </div>
+            </div>
+            
+            <div id="map" class="map-container"></div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно чат-бота -->
+    <div id="chatBotModal" class="chatbot-modal">
+        <div class="chatbot-modal-content">
+            <div class="chatbot-header">
+                <h2>🚑 Чат-бот скорой помощи</h2>
+                <button class="chatbot-close" id="closeChatBot">&times;</button>
+            </div>
+            <div class="chatbot-messages" id="chatBotMessages">
+                <div class="chatbot-message bot-message">
+                    <p>Здравствуйте! Я помогу вызвать скорую помощь. Опишите ситуацию, и я найду ближайшую больницу и отправлю скорую помощь.</p>
+                </div>
+            </div>
+            <div class="chatbot-input-container">
+                <input type="text" id="chatBotInput" placeholder="Опишите ситуацию..." />
+                <button id="sendChatBotBtn">Отправить</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
+

@@ -1,0 +1,935 @@
+{% extends "base.html" %}
+
+{% block title %}Голосовой звонок - AI Help Desk{% endblock %}
+
+{% block extra_head %}
+<style>
+.voice-call-container {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: var(--spacing-xl);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.call-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.call-header h1 {
+    margin-bottom: var(--spacing-md);
+}
+
+.call-status {
+    font-size: 1.125rem;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-lg);
+}
+
+.call-participants {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-xl);
+    background: var(--color-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+}
+
+.participant {
+    text-align: center;
+}
+
+.participant-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    margin: 0 auto var(--spacing-md);
+}
+
+.participant-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.call-controls {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.call-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.call-btn:hover {
+    transform: scale(1.1);
+}
+
+.btn-answer {
+    background: #10b981;
+    color: white;
+}
+
+.btn-answer:hover {
+    background: #059669;
+}
+
+.btn-reject {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-reject:hover {
+    background: #dc2626;
+}
+
+.btn-end {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-end:hover {
+    background: #dc2626;
+}
+
+.call-info {
+    text-align: center;
+    padding: var(--spacing-lg);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.call-timer {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--color-text);
+    font-family: 'Monaco', monospace;
+}
+
+.call-actions {
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.connecting {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="voice-call-container">
+    <div class="call-header">
+        <h1>📞 Голосовой звонок</h1>
+        <div class="call-status" id="callStatus">Подготовка к звонку...</div>
+    </div>
+    
+    <div class="call-participants">
+        <div class="participant">
+            <div class="participant-avatar">👤</div>
+            <div class="participant-name">{{ user.username }}</div>
+            <div style="font-size: 0.875rem; color: var(--color-text-light);">Вы</div>
+        </div>
+        <div style="font-size: 2rem; color: var(--color-text-light);">↔</div>
+        <div class="participant">
+            <div class="participant-avatar">👤</div>
+            <div class="participant-name" id="calleeName">
+                {% if callee %}{{ callee.username }}{% else %}Ожидание...{% endif %}
+            </div>
+            <div style="font-size: 0.875rem; color: var(--color-text-light);">Собеседник</div>
+        </div>
+    </div>
+    
+    <div class="call-info">
+        <div class="call-timer" id="callTimer">00:00</div>
+        <div style="font-size: 0.875rem; color: var(--color-text-light); margin-top: var(--spacing-sm);">Длительность звонка</div>
+    </div>
+    
+    <!-- Кнопки управления звонком -->
+    <div class="call-controls" id="callControls">
+        <!-- Кнопки для входящего звонка -->
+        <div id="incomingCallControls" class="hidden">
+            <button class="call-btn btn-answer" onclick="answerCall()" title="Принять">
+                ✓
+            </button>
+            <button class="call-btn btn-reject" onclick="rejectCall()" title="Отклонить">
+                ✕
+            </button>
+        </div>
+        
+        <!-- Кнопки для активного звонка -->
+        <div id="activeCallControls" class="hidden">
+            <button class="call-btn btn-end" onclick="endCall()" title="Завершить звонок">
+                📞
+            </button>
+        </div>
+        
+        <!-- Кнопка для инициации звонка -->
+        <div id="initiateCallControls" class="hidden">
+            <button class="call-btn btn-answer" onclick="startCall()" title="Начать звонок">
+                📞
+            </button>
+        </div>
+    </div>
+    
+    <!-- Кнопка для запроса доступа к микрофону -->
+    <div id="micPermissionSection" class="hidden" style="text-align: center; margin: 16px 0;">
+        <button class="btn btn-secondary" onclick="requestMicrophonePermission()" style="padding: 12px 24px; font-size: 1rem;">
+            🎤 Запросить доступ к микрофону
+        </button>
+        <div id="micPermissionStatus" style="margin-top: 8px; font-size: 0.875rem; color: var(--color-text-light);"></div>
+    </div>
+    
+    <div class="call-actions">
+        <a href="/chat/{{ chat.id }}" class="btn btn-secondary">← Вернуться в чат</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+const chatId = {{ chat.id }};
+const callId = '{{ call_id }}';
+const currentUserId = {{ user.id }};
+const calleeId = {% if callee %}{{ callee.id }}{% else %}null{% endif %};
+
+let socket;
+let localStream = null;
+let remoteStream = null;
+let peerConnection = null;
+let callStartTime = null;
+let callTimerInterval = null;
+
+// WebRTC конфигурация
+const rtcConfiguration = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+    ]
+};
+
+// Инициализация Socket.IO
+function initSocket() {
+    socket = io();
+    
+    socket.on('connect', () => {
+        console.log('Connected to WebSocket');
+        // Статус будет обновлен после проверки разрешений
+    });
+    
+    socket.on('connected', (data) => {
+        console.log('Socket connected:', data);
+    });
+    
+    socket.on('incoming_call', (data) => {
+        if (data.call_id === callId) {
+            handleIncomingCall(data);
+        }
+    });
+    
+    socket.on('call_accepted', (data) => {
+        if (data.call_id === callId) {
+            handleCallAccepted();
+        }
+    });
+    
+    socket.on('call_rejected', (data) => {
+        if (data.call_id === callId) {
+            handleCallRejected();
+        }
+    });
+    
+    socket.on('call_ended', (data) => {
+        if (data.call_id === callId) {
+            handleCallEnded();
+        }
+    });
+    
+    socket.on('webrtc_offer', async (data) => {
+        if (data.call_id === callId) {
+            await handleWebRTCOffer(data.offer);
+        }
+    });
+    
+    socket.on('webrtc_answer', async (data) => {
+        if (data.call_id === callId) {
+            await handleWebRTCAnswer(data.answer);
+        }
+    });
+    
+    socket.on('webrtc_ice_candidate', async (data) => {
+        if (data.call_id === callId) {
+            await handleICE(data.candidate);
+        }
+    });
+    
+    socket.on('error', (data) => {
+        console.error('Socket error:', data);
+        alert('Ошибка: ' + (data.message || 'Неизвестная ошибка'));
+    });
+}
+
+// Обновление статуса звонка
+function updateCallStatus(status) {
+    document.getElementById('callStatus').textContent = status;
+}
+
+// Получение доступа к микрофону с поддержкой HTTP (для MVP)
+async function getMediaStream() {
+    const constraints = { audio: true, video: false };
+    
+    // Пробуем использовать современный API (mediaDevices)
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+            return await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (error) {
+            console.warn('mediaDevices.getUserMedia failed, trying legacy API:', error);
+            // Пробуем legacy API как fallback
+        }
+    }
+    
+    // Используем legacy API для работы без HTTPS (fallback для MVP)
+    const getUserMedia = navigator.getUserMedia || 
+                        navigator.webkitGetUserMedia || 
+                        navigator.mozGetUserMedia ||
+                        navigator.msGetUserMedia;
+    
+    if (getUserMedia) {
+        return new Promise((resolve, reject) => {
+            getUserMedia.call(navigator, constraints,
+                (stream) => resolve(stream),
+                (error) => {
+                    // Улучшаем обработку ошибок для legacy API
+                    const legacyError = new Error();
+                    
+                    if (error.code === 1 || error.name === 'PERMISSION_DENIED') {
+                        legacyError.name = 'NotAllowedError';
+                        legacyError.message = 'Доступ к микрофону запрещен. Разрешите доступ в настройках браузера.';
+                    } else if (error.code === 2 || error.name === 'DEVICE_NOT_FOUND') {
+                        legacyError.name = 'NotFoundError';
+                        legacyError.message = 'Микрофон не найден. Подключите микрофон.';
+                    } else if (error.code === 3 || error.name === 'TRACK_START_FAILED') {
+                        legacyError.name = 'NotReadableError';
+                        legacyError.message = 'Микрофон используется другим приложением.';
+                    } else {
+                        legacyError.name = error.name || 'UnknownError';
+                        legacyError.message = error.message || 'Не удалось получить доступ к микрофону. Проверьте настройки браузера.';
+                    }
+                    
+                    reject(legacyError);
+                }
+            );
+        });
+    }
+    
+    // Если ничего не работает, возвращаем понятную ошибку
+    let errorMessage = 'Браузер не поддерживает доступ к микрофону или требуется настройка. ';
+    
+    const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const isLocalNetwork = /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(location.hostname);
+    
+    if (!isLocalhost && !isLocalNetwork && location.protocol !== 'https:') {
+        errorMessage += 'Для работы на IP-адресе разрешите доступ к микрофону в настройках браузера или используйте localhost.';
+    } else {
+        errorMessage += 'Разрешите доступ к микрофону в настройках браузера.';
+    }
+    
+    const error = new Error(errorMessage);
+    error.name = 'UnsupportedError';
+    throw error;
+}
+
+// Упрощенная проверка доступности (только для информации)
+function checkMediaDevicesSupport() {
+    const hasModernAPI = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+    const hasLegacyAPI = navigator.getUserMedia || 
+                        navigator.webkitGetUserMedia || 
+                        navigator.mozGetUserMedia ||
+                        navigator.msGetUserMedia;
+    
+    if (hasModernAPI || hasLegacyAPI) {
+        return { supported: true };
+    }
+    
+    return {
+        supported: false,
+        error: 'Браузер не поддерживает доступ к микрофону. Обновите браузер до последней версии.'
+    };
+}
+
+// Проверка статуса разрешения на доступ к микрофону
+async function checkMicrophonePermission() {
+    if (!navigator.permissions || !navigator.permissions.query) {
+        return 'unknown'; // Браузер не поддерживает API проверки разрешений
+    }
+    
+    try {
+        const result = await navigator.permissions.query({ name: 'microphone' });
+        return result.state; // 'granted', 'denied', or 'prompt'
+    } catch (error) {
+        console.warn('Permission query not supported:', error);
+        return 'unknown';
+    }
+}
+
+// Запрос доступа к микрофону (для предварительной настройки)
+async function requestMicrophonePermission() {
+    const statusDiv = document.getElementById('micPermissionStatus');
+    const micSection = document.getElementById('micPermissionSection');
+    
+    statusDiv.textContent = 'Запрос разрешения...';
+    statusDiv.style.color = '#3b82f6';
+    
+    try {
+        // Пытаемся получить доступ к микрофону
+        const stream = await getMediaStream();
+        
+        // Если успешно, сразу останавливаем поток (нам нужен только запрос разрешения)
+        stream.getTracks().forEach(track => track.stop());
+        
+        statusDiv.textContent = '✅ Доступ к микрофону разрешен! Теперь можно начать звонок.';
+        statusDiv.style.color = '#10b981';
+        
+        // Останавливаем тестовый поток (при начале звонка получим новый)
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Скрываем секцию запроса через 3 секунды
+        setTimeout(() => {
+            micSection.classList.add('hidden');
+        }, 3000);
+        
+        updateCallStatus('Готово к звонку');
+        
+    } catch (error) {
+        console.error('Permission request failed:', error);
+        
+        let errorText = '';
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (error.name === 'NotAllowedError') {
+            errorText = '⚠️ Доступ к микрофону не был предоставлен. ';
+            if (isMobile) {
+                errorText += 'Разрешите доступ в настройках браузера (иконка 🔒 в адресной строке) и попробуйте снова.';
+            } else {
+                errorText += 'Разрешите доступ в настройках браузера или нажмите "Разрешить" при следующем запросе.';
+            }
+            statusDiv.style.color = '#f59e0b';
+        } else if (error.name === 'NotFoundError') {
+            errorText = '⚠️ Микрофон не найден. Подключите микрофон и попробуйте снова.';
+            statusDiv.style.color = '#f59e0b';
+        } else if (error.name === 'NotReadableError') {
+            errorText = '⚠️ Микрофон используется другим приложением. Закройте другие программы и попробуйте снова.';
+            statusDiv.style.color = '#f59e0b';
+        } else {
+            errorText = '⚠️ Не удалось получить доступ к микрофону. ';
+            errorText += error.message || 'Проверьте настройки браузера и попробуйте снова.';
+            statusDiv.style.color = '#ef4444';
+        }
+        
+        statusDiv.textContent = errorText;
+        
+        // Показываем инструкции для мобильных устройств (только если это NotAllowedError)
+        if (isMobile && error.name === 'NotAllowedError') {
+            setTimeout(() => {
+                alert('📱 Инструкция для мобильного устройства:\n\n' +
+                    '1. Нажмите на иконку 🔒 или ⓘ в адресной строке\n' +
+                    '2. Найдите "Микрофон" в разрешениях\n' +
+                    '3. Разрешите доступ к микрофону\n' +
+                    '4. Вернитесь на эту страницу и нажмите кнопку "Запросить доступ" снова');
+            }, 500);
+        }
+    }
+}
+
+// Автоматический запрос разрешения при загрузке страницы
+async function autoRequestMicrophonePermission() {
+    // Проверяем, есть ли уже разрешение
+    const permissionStatus = await checkMicrophonePermission();
+    
+    if (permissionStatus === 'granted') {
+        // Разрешение уже есть, скрываем секцию
+        document.getElementById('micPermissionSection').classList.add('hidden');
+        updateCallStatus('Готово к звонку');
+        return;
+    }
+    
+    if (permissionStatus === 'denied') {
+        // Разрешение было отклонено, показываем секцию для ручного запроса
+        document.getElementById('micPermissionSection').classList.remove('hidden');
+        document.getElementById('micPermissionStatus').textContent = 
+            '⚠️ Доступ к микрофону был заблокирован. Нажмите кнопку выше, чтобы разрешить.';
+        document.getElementById('micPermissionStatus').style.color = '#f59e0b';
+        return;
+    }
+    
+    // Если статус 'prompt' или 'unknown', показываем кнопку для ручного запроса
+    // (не пытаемся автоматически, чтобы избежать лишних ошибок)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Показываем кнопку для ручного запроса (более предсказуемо)
+    document.getElementById('micPermissionSection').classList.remove('hidden');
+    if (isMobile) {
+        document.getElementById('micPermissionStatus').textContent = 
+            'Нажмите кнопку выше, чтобы разрешить доступ к микрофону.';
+    } else {
+        document.getElementById('micPermissionStatus').textContent = 
+            'Нажмите кнопку выше, чтобы разрешить доступ к микрофону и проверить подключение.';
+    }
+    document.getElementById('micPermissionStatus').style.color = '#3b82f6';
+    
+    // Обновляем статус
+    updateCallStatus('Разрешите доступ к микрофону для начала звонка');
+}
+
+// Обновление таймера
+function updateCallTimer() {
+    if (callStartTime) {
+        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        document.getElementById('callTimer').textContent = 
+            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+}
+
+// Начало звонка
+async function startCall() {
+    if (!calleeId) {
+        alert('Собеседник не найден');
+        return;
+    }
+    
+    try {
+        updateCallStatus('Установка соединения...');
+        
+        // Получаем доступ к микрофону
+        localStream = await getMediaStream();
+        
+        // Создаем peer connection
+        peerConnection = new RTCPeerConnection(rtcConfiguration);
+        
+        // Добавляем локальный поток
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+        
+        // Обработка удаленного потока
+        peerConnection.ontrack = (event) => {
+            remoteStream = event.streams[0];
+            // Воспроизводим удаленный аудио
+            const audio = new Audio();
+            audio.srcObject = remoteStream;
+            audio.play();
+        };
+        
+        // Обработка ICE candidates
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit('webrtc_ice_candidate', {
+                    call_id: callId,
+                    candidate: event.candidate
+                });
+            }
+        };
+        
+        // Создаем offer
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        
+        // Отправляем сигнал инициации звонка
+        socket.emit('call_initiate', {
+            chat_id: chatId,
+            call_id: callId
+        });
+        
+        // Отправляем offer
+        socket.emit('webrtc_offer', {
+            call_id: callId,
+            offer: offer
+        });
+        
+        updateCallStatus('Звонок...');
+        document.getElementById('initiateCallControls').classList.add('hidden');
+        
+    } catch (error) {
+        console.error('Error starting call:', error);
+        let errorMsg = error.message || 'Неизвестная ошибка';
+        let instructions = '';
+        
+        // Определяем, мобильное ли устройство
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isIP = /^(192\.168\.|10\.|172\.)/.test(location.hostname);
+        
+        // Более понятные сообщения для пользователя
+        if (error.name === 'NotAllowedError' || error.message.includes('разрешите')) {
+            errorMsg = 'Доступ к микрофону запрещен.';
+            
+            if (isMobile && isIP) {
+                instructions = '\n\n📱 Для мобильного устройства:\n' +
+                    '1. Нажмите на иконку 🔒 или ⓘ в адресной строке\n' +
+                    '2. Найдите "Микрофон" в разрешениях\n' +
+                    '3. Разрешите доступ к микрофону\n' +
+                    '4. Обновите страницу и попробуйте снова\n\n' +
+                    '💡 Или используйте localhost вместо IP-адреса для лучшей совместимости.';
+            } else if (isMobile) {
+                instructions = '\n\n📱 Инструкции:\n' +
+                    '1. Нажмите на иконку 🔒 в адресной строке\n' +
+                    '2. Разрешите доступ к микрофону\n' +
+                    '3. Обновите страницу';
+            } else {
+                instructions = '\n\nИнструкции:\n' +
+                    '1. Кликните на иконку 🔒 слева от адреса\n' +
+                    '2. В настройках сайта разрешите доступ к микрофону\n' +
+                    '3. Обновите страницу и попробуйте снова';
+            }
+        } else if (error.name === 'NotFoundError') {
+            errorMsg = 'Микрофон не найден. Подключите микрофон и обновите страницу.';
+        } else if (error.name === 'NotReadableError') {
+            errorMsg = 'Микрофон используется другим приложением. Закройте другие программы, использующие микрофон.';
+        } else if (error.name === 'SecurityError' || error.message.includes('безопасности')) {
+            errorMsg = 'Проблема с безопасностью.';
+            if (isMobile && isIP) {
+                instructions = '\n\n📱 Мобильные браузеры требуют HTTPS для доступа к микрофону через IP-адрес.\n\n' +
+                    'Решения:\n' +
+                    '• Используйте localhost вместо IP-адреса\n' +
+                    '• Или разрешите доступ в настройках браузера (иконка 🔒 в адресной строке)';
+            }
+        }
+        
+        alert('Ошибка при начале звонка:\n' + errorMsg + instructions);
+        updateCallStatus('Ошибка подключения');
+        document.getElementById('initiateCallControls').classList.remove('hidden');
+        
+        // Если ошибка связана с разрешением, показываем секцию запроса
+        if (error.name === 'NotAllowedError' || error.message.includes('разрешите')) {
+            document.getElementById('micPermissionSection').classList.remove('hidden');
+            document.getElementById('micPermissionStatus').textContent = 
+                'Разрешите доступ к микрофону, нажав кнопку выше, или в настройках браузера.';
+            document.getElementById('micPermissionStatus').style.color = '#ef4444';
+        }
+    }
+}
+
+// Обработка входящего звонка
+function handleIncomingCall(data) {
+    updateCallStatus('Входящий звонок...');
+    document.getElementById('incomingCallControls').classList.remove('hidden');
+}
+
+// Принятие звонка
+async function answerCall() {
+    try {
+        updateCallStatus('Принятие звонка...');
+        
+        // Получаем доступ к микрофону
+        localStream = await getMediaStream();
+        
+        // Создаем peer connection
+        peerConnection = new RTCPeerConnection(rtcConfiguration);
+        
+        // Добавляем локальный поток
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+        
+        // Обработка удаленного потока
+        peerConnection.ontrack = (event) => {
+            remoteStream = event.streams[0];
+            const audio = new Audio();
+            audio.srcObject = remoteStream;
+            audio.play();
+        };
+        
+        // Обработка ICE candidates
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit('webrtc_ice_candidate', {
+                    call_id: callId,
+                    candidate: event.candidate
+                });
+            }
+        };
+        
+        // Отправляем ответ
+        socket.emit('call_answer', {
+            call_id: callId,
+            answer: 'accept'
+        });
+        
+        document.getElementById('incomingCallControls').classList.add('hidden');
+        document.getElementById('activeCallControls').classList.remove('hidden');
+        
+    } catch (error) {
+        console.error('Error answering call:', error);
+        let errorMsg = error.message || 'Неизвестная ошибка';
+        let instructions = '';
+        
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isIP = /^(192\.168\.|10\.|172\.)/.test(location.hostname);
+        
+        // Более понятные сообщения
+        if (error.name === 'NotAllowedError' || error.message.includes('разрешите')) {
+            errorMsg = 'Доступ к микрофону запрещен.';
+            
+            if (isMobile && isIP) {
+                instructions = '\n\n📱 На мобильном:\n' +
+                    '1. Нажмите 🔒 или ⓘ в адресной строке\n' +
+                    '2. Разрешите доступ к микрофону\n' +
+                    '3. Обновите страницу';
+            } else {
+                instructions = '\n\nРазрешите доступ в настройках браузера (иконка 🔒 в адресной строке).';
+            }
+        } else if (error.name === 'NotFoundError') {
+            errorMsg = 'Микрофон не найден. Подключите микрофон.';
+        } else if (error.name === 'NotReadableError') {
+            errorMsg = 'Микрофон используется другим приложением.';
+        }
+        
+        alert('Ошибка при принятии звонка:\n' + errorMsg + instructions);
+        updateCallStatus('Ошибка подключения');
+        document.getElementById('incomingCallControls').classList.remove('hidden');
+    }
+}
+
+// Отклонение звонка
+function rejectCall() {
+    socket.emit('call_answer', {
+        call_id: callId,
+        answer: 'reject'
+    });
+    
+    updateCallStatus('Звонок отклонен');
+    setTimeout(() => {
+        window.location.href = `/chat/${chatId}`;
+    }, 2000);
+}
+
+// Завершение звонка
+function endCall() {
+    socket.emit('call_end', {
+        call_id: callId
+    });
+    
+    // Останавливаем потоки
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+    }
+    
+    if (peerConnection) {
+        peerConnection.close();
+    }
+    
+    if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+    }
+    
+    updateCallStatus('Звонок завершен');
+    setTimeout(() => {
+        window.location.href = `/chat/${chatId}`;
+    }, 2000);
+}
+
+// Обработка принятия звонка
+function handleCallAccepted() {
+    updateCallStatus('Звонок активен');
+    document.getElementById('initiateCallControls').classList.add('hidden');
+    document.getElementById('activeCallControls').classList.remove('hidden');
+    
+    callStartTime = Date.now();
+    callTimerInterval = setInterval(updateCallTimer, 1000);
+}
+
+// Обработка отклонения звонка
+function handleCallRejected() {
+    updateCallStatus('Звонок отклонен');
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+    }
+    if (peerConnection) {
+        peerConnection.close();
+    }
+    setTimeout(() => {
+        window.location.href = `/chat/${chatId}`;
+    }, 2000);
+}
+
+// Обработка завершения звонка
+function handleCallEnded() {
+    updateCallStatus('Собеседник завершил звонок');
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+    }
+    if (peerConnection) {
+        peerConnection.close();
+    }
+    if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+    }
+    setTimeout(() => {
+        window.location.href = `/chat/${chatId}`;
+    }, 2000);
+}
+
+// Обработка WebRTC offer
+async function handleWebRTCOffer(offer) {
+    try {
+        if (!peerConnection) {
+            // Создаем peer connection для ответа
+            localStream = await getMediaStream();
+            
+            peerConnection = new RTCPeerConnection(rtcConfiguration);
+            
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+            
+            peerConnection.ontrack = (event) => {
+                remoteStream = event.streams[0];
+                const audio = new Audio();
+                audio.srcObject = remoteStream;
+                audio.play();
+            };
+            
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('webrtc_ice_candidate', {
+                        call_id: callId,
+                        candidate: event.candidate
+                    });
+                }
+            };
+        }
+        
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        
+        socket.emit('webrtc_answer', {
+            call_id: callId,
+            answer: answer
+        });
+        
+    } catch (error) {
+        console.error('Error handling offer:', error);
+        let errorMsg = error.message || 'Неизвестная ошибка';
+        
+        if (error.name === 'NotAllowedError' || error.message.includes('разрешите')) {
+            errorMsg = 'Доступ к микрофону запрещен. Разрешите доступ в настройках браузера.';
+        }
+        
+        alert('Ошибка при обработке звонка:\n' + errorMsg);
+        updateCallStatus('Ошибка подключения');
+    }
+}
+
+// Обработка WebRTC answer
+async function handleWebRTCAnswer(answer) {
+    try {
+        if (peerConnection) {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        }
+    } catch (error) {
+        console.error('Error handling answer:', error);
+    }
+}
+
+// Обработка ICE candidate
+async function handleICE(candidate) {
+    try {
+        if (peerConnection) {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+    } catch (error) {
+        console.error('Error handling ICE candidate:', error);
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', async function() {
+    initSocket();
+    
+    // Показываем кнопку начала звонка
+    document.getElementById('initiateCallControls').classList.remove('hidden');
+    
+    // Статус будет обновлен после проверки разрешений
+    
+    // Автоматически проверяем доступ к микрофону
+    await autoRequestMicrophonePermission();
+    
+    // Показываем информационное сообщение для HTTP (не блокирующее)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIP = /^(192\.168\.|10\.|172\.)/.test(location.hostname);
+    
+    if (location.protocol === 'http:' && !/localhost|127\.0\.0\.1/.test(location.hostname)) {
+        const infoDiv = document.createElement('div');
+        infoDiv.style.cssText = 'background: #dbeafe; border: 1px solid #3b82f6; border-radius: 8px; padding: 12px; margin: 16px 0; color: #1e40af; font-size: 0.875rem; line-height: 1.5;';
+        
+        let infoText = '<strong>ℹ️ Информация:</strong><br>';
+        
+        if (isMobile && isIP) {
+            infoText += 'Для работы голосовых звонков разрешите доступ к микрофону. ' +
+                'Используйте кнопку ниже или настройки браузера (иконка 🔒 в адресной строке).<br><br>' +
+                '<strong>💡 Совет:</strong> Для лучшей совместимости используйте <strong>localhost</strong> вместо IP-адреса.';
+        } else {
+            infoText += 'При первом звонке браузер запросит разрешение на доступ к микрофону.';
+        }
+        
+        infoDiv.innerHTML = infoText;
+        document.querySelector('.call-header').after(infoDiv);
+    }
+});
+
+// Очистка при закрытии страницы
+window.addEventListener('beforeunload', function() {
+    if (socket) {
+        socket.disconnect();
+    }
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+    }
+    if (peerConnection) {
+        peerConnection.close();
+    }
+    if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+    }
+});
+</script>
+{% endblock %}
+

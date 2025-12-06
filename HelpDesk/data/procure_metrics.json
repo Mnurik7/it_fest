@@ -1,0 +1,29 @@
+{
+  "extraction_accuracy": [
+    100.0,
+    100.0,
+    100.0,
+    100.0
+  ],
+  "risk_detection_accuracy": [],
+  "processing_times": [
+    15.536539077758789,
+    16.90862488746643,
+    17.776160955429077,
+    33.797144651412964
+  ],
+  "tenders_processed": 4,
+  "suppliers_matched": 16,
+  "reports_generated": 3,
+  "errors_count": 0,
+  "user_feedback": [],
+  "daily_stats": {
+    "2025-12-04": {
+      "extractions": 4,
+      "supplier_matches": 3,
+      "risk_analyses": 3,
+      "reports_generated": 3,
+      "errors": 0
+    }
+  }
+}

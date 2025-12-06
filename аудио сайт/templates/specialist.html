@@ -1,0 +1,795 @@
+{% extends "base.html" %}
+
+{% block title %}Панель специалиста - AI Help Desk{% endblock %}
+
+{% block extra_head %}
+<style>
+.specialist-compact-container {
+    max-width: 100%;
+    padding: var(--spacing-lg);
+}
+
+.specialist-header-compact {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.specialist-avatar-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.specialist-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--color-primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.specialist-avatar:hover {
+    opacity: 0.8;
+}
+
+.specialist-avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    border: 3px solid var(--color-primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.specialist-avatar-placeholder:hover {
+    opacity: 0.8;
+}
+
+.avatar-upload-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 28px;
+    height: 28px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid var(--color-bg);
+    font-size: 0.875rem;
+}
+
+.avatar-upload-input {
+    display: none;
+}
+
+.specialist-info-compact {
+    flex: 1;
+}
+
+.specialist-info-compact h1 {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: 1.5rem;
+}
+
+.specialist-info-compact p {
+    margin: 0;
+    color: var(--color-text-light);
+    font-size: 0.875rem;
+}
+
+.stats-container-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.stat-card-compact {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: var(--transition);
+}
+
+.stat-card-compact:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-icon-compact {
+    font-size: 1.25rem;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.stat-content-compact {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-value-compact {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.125rem;
+    line-height: 1.2;
+}
+
+.stat-label-compact {
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filters-section-compact {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.filters-header-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.filters-header-compact h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.filters-container-compact {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.filter-group-compact {
+    flex: 1;
+    min-width: 150px;
+}
+
+.filter-group-compact label {
+    display: block;
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-light);
+}
+
+.filter-select-compact {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+}
+
+.tickets-section-compact {
+    margin-top: var(--spacing-lg);
+}
+
+.tickets-section-compact h3 {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: 1.125rem;
+}
+
+.table-container-compact {
+    overflow-x: auto;
+}
+
+.tickets-table-compact {
+    width: 100%;
+    font-size: 0.875rem;
+}
+
+.tickets-table-compact th,
+.tickets-table-compact td {
+    padding: var(--spacing-sm);
+}
+
+.tickets-table-compact th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+@media (max-width: 768px) {
+    .specialist-header-compact {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stats-container-compact {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .filters-container-compact {
+        flex-direction: column;
+    }
+    
+    .filter-group-compact {
+        min-width: 100%;
+    }
+}
+
+.dispatch-notification {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 2px solid #3b82f6;
+    border-radius: var(--radius-lg);
+    animation: slideIn 0.3s ease-out;
+}
+
+.dispatch-notification-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.dispatch-notification-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.dispatch-notification-info {
+    flex: 1;
+}
+
+.dispatch-notification-title {
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-xs);
+}
+
+.dispatch-notification-subtitle {
+    color: var(--color-text-light);
+    font-size: 0.875rem;
+}
+
+.dispatch-notification-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pending-dispatches-section {
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.pending-dispatches-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.pending-dispatch-card {
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 2px solid #3b82f6;
+    border-radius: var(--radius-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
+    transition: var(--transition);
+}
+
+.pending-dispatch-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.pending-dispatch-info {
+    flex: 1;
+}
+
+.pending-dispatch-client {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-xs);
+}
+
+.pending-dispatch-address {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-xs);
+}
+
+.pending-dispatch-time {
+    font-size: 0.75rem;
+    color: var(--color-text-lighter);
+}
+
+.pending-dispatch-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .pending-dispatch-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .pending-dispatch-actions {
+        width: 100%;
+    }
+    
+    .pending-dispatch-actions button {
+        flex: 1;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="specialist-compact-container">
+    <!-- Компактный заголовок с аватаром -->
+    <div class="specialist-header-compact">
+        <div class="specialist-avatar-container">
+            {% if user and user.avatar_url %}
+            <img src="{{ user.avatar_url }}" alt="{{ user.username }}" class="specialist-avatar" id="specialistAvatar" onclick="document.getElementById('avatarUploadInput').click();">
+            {% else %}
+            <div class="specialist-avatar-placeholder" onclick="document.getElementById('avatarUploadInput').click();">
+                🔧
+            </div>
+            {% endif %}
+            <div class="avatar-upload-overlay" onclick="document.getElementById('avatarUploadInput').click();" title="Изменить фото">
+                📷
+            </div>
+            <input type="file" id="avatarUploadInput" class="avatar-upload-input" accept="image/*" onchange="uploadAvatar(event)">
+        </div>
+        <div class="specialist-info-compact">
+            <h1>🔧 {{ user.username if user else session.get('username') }}</h1>
+            <p>Отдел: <strong id="userDepartment">{{ user_department or 'Не указан' }}</strong></p>
+        </div>
+    </div>
+    
+    <!-- Компактная статистика -->
+    <div class="stats-container-compact" id="statsContainer">
+        <div class="stat-card-compact stat-total">
+            <div class="stat-icon-compact">📋</div>
+            <div class="stat-content-compact">
+                <div class="stat-value-compact" id="statTotal">-</div>
+                <div class="stat-label-compact">Всего</div>
+            </div>
+        </div>
+        <div class="stat-card-compact stat-open">
+            <div class="stat-icon-compact">🔵</div>
+            <div class="stat-content-compact">
+                <div class="stat-value-compact" id="statOpen">-</div>
+                <div class="stat-label-compact">Открытых</div>
+            </div>
+        </div>
+        <div class="stat-card-compact stat-progress">
+            <div class="stat-icon-compact">⚙️</div>
+            <div class="stat-content-compact">
+                <div class="stat-value-compact" id="statInProgress">-</div>
+                <div class="stat-label-compact">В работе</div>
+            </div>
+        </div>
+        <div class="stat-card-compact stat-resolved">
+            <div class="stat-icon-compact">✅</div>
+            <div class="stat-content-compact">
+                <div class="stat-value-compact" id="statResolved">-</div>
+                <div class="stat-label-compact">Решённых</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Компактные фильтры -->
+    <div class="filters-section-compact">
+        <div class="filters-header-compact">
+            <h3>🔍 Фильтры</h3>
+            <button class="btn btn-secondary btn-sm" onclick="loadTickets(); loadStats();">
+                <span id="refreshBtnText">🔄 Обновить</span>
+                <span id="refreshBtnLoader" class="loader" style="display: none;"></span>
+            </button>
+        </div>
+        <div class="filters-container-compact">
+            <div class="filter-group-compact">
+                <label for="filterStatus">Статус</label>
+                <select id="filterStatus" class="filter-select-compact">
+                    <option value="">Все</option>
+                    <option value="OPEN">🔵 Открыт</option>
+                    <option value="IN_PROGRESS">⚙️ В работе</option>
+                    <option value="RESOLVED">✅ Решён</option>
+                    <option value="AUTO_CLOSED">🤖 Авто-закрыт</option>
+                </select>
+            </div>
+            
+            <div class="filter-group-compact">
+                <label for="filterPriority">Приоритет</label>
+                <select id="filterPriority" class="filter-select-compact">
+                    <option value="">Все</option>
+                    <option value="LOW">🟢 Низкий</option>
+                    <option value="MEDIUM">🔵 Средний</option>
+                    <option value="HIGH">🟠 Высокий</option>
+                    <option value="CRITICAL">🔴 Критический</option>
+                </select>
+            </div>
+            
+            <div class="filter-group-compact">
+                <label for="filterSource">Источник</label>
+                <select id="filterSource" class="filter-select-compact">
+                    <option value="">Все</option>
+                    <option value="phone">📞 Звонки</option>
+                    <option value="portal">🌐 Портал</option>
+                    <option value="chat">💬 Чат</option>
+                    <option value="email">📧 Email</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Компактная таблица тикетов -->
+    <div class="tickets-section-compact">
+        <h3>📋 Список обращений</h3>
+        <div class="table-container-compact">
+            <table class="tickets-table-compact tickets-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Пользователь</th>
+                        <th>Источник</th>
+                        <th>Категория</th>
+                        <th>Приоритет</th>
+                        <th>Статус</th>
+                        <th>Дата</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsTableBody">
+                    <tr>
+                        <td colspan="8" class="loading">
+                            <div class="loading-spinner"></div>
+                            <div>Загрузка...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для детального просмотра тикета -->
+<div id="ticketModal" class="modal" style="display: none;">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>📋 Обращение #<span id="modalTicketId"></span></h2>
+            <span class="close" onclick="closeTicketModal()">&times;</span>
+        </div>
+        
+        <div class="ticket-details">
+            <!-- Информация о пользователе -->
+            <div class="detail-row user-info-row" id="userInfoRow" style="display: none;">
+                <div class="detail-icon">👤</div>
+                <div class="detail-content">
+                    <strong>Запрос от пользователя:</strong>
+                    <span id="modalUserName" class="user-name"></span>
+                </div>
+            </div>
+            
+            <!-- Основная информация -->
+            <div class="details-grid">
+                <div class="detail-item">
+                    <div class="detail-icon">📥</div>
+                    <div class="detail-content">
+                        <strong>Источник:</strong>
+                        <span id="modalSource"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🌐</div>
+                    <div class="detail-content">
+                        <strong>Язык:</strong>
+                        <span id="modalLanguage"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🏷️</div>
+                    <div class="detail-content">
+                        <strong>Категория:</strong>
+                        <span id="modalCategory"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">⚡</div>
+                    <div class="detail-content">
+                        <strong>Приоритет:</strong>
+                        <span id="modalPriority"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📌</div>
+                    <div class="detail-content">
+                        <strong>Тип:</strong>
+                        <span id="modalType"></span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📊</div>
+                    <div class="detail-content">
+                        <strong>Статус:</strong>
+                        <span id="modalStatus"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Текст запроса -->
+            <div class="detail-section">
+                <div class="section-header">
+                    <span class="section-icon">📝</span>
+                    <strong>Текст запроса от пользователя:</strong>
+                </div>
+                <div class="detail-text" id="modalText"></div>
+            </div>
+            
+            <!-- Резюме и советы от ИИ -->
+            <div class="ai-info-section">
+                <div class="detail-section ai-summary">
+                    <div class="section-header">
+                        <span class="section-icon">🤖</span>
+                        <strong>Резюме от ИИ:</strong>
+                    </div>
+                    <div class="detail-text ai-text" id="modalSummary"></div>
+                </div>
+                
+                <div class="detail-section ai-advice">
+                    <div class="section-header">
+                        <span class="section-icon">💡</span>
+                        <strong>Совет от ИИ для специалиста:</strong>
+                    </div>
+                    <div class="detail-text ai-text" id="modalAutoResponse"></div>
+                </div>
+            </div>
+            
+            <!-- Форма ответа -->
+            <div class="response-section">
+                <div class="detail-section">
+                    <label for="modalLastResponse" class="response-label">
+                        <span class="section-icon">✍️</span>
+                        <strong>Ваш ответ пользователю:</strong>
+                    </label>
+                    <textarea id="modalLastResponse" rows="6" placeholder="Введите ваш ответ пользователю. Этот ответ будет виден пользователю в его профиле." class="response-textarea"></textarea>
+                    <small class="form-hint">💬 Этот ответ будет отправлен пользователю и отобразится в его профиле</small>
+                </div>
+                
+                <div class="detail-section">
+                    <label for="modalStatusSelect" class="status-label">
+                        <span class="section-icon">📊</span>
+                        <strong>Изменить статус обращения:</strong>
+                    </label>
+                    <select id="modalStatusSelect" class="status-select">
+                        <option value="OPEN">🔵 Открыт</option>
+                        <option value="IN_PROGRESS">⚙️ В работе</option>
+                        <option value="RESOLVED">✅ Решён</option>
+                    </select>
+                    <small class="form-hint">Выберите текущий статус обработки обращения</small>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-success btn-save" onclick="saveTicketChanges()">
+                    <span id="saveBtnText">💾 Сохранить ответ</span>
+                    <span id="saveBtnLoader" class="loader" style="display: none;"></span>
+                </button>
+                <button class="btn btn-secondary" onclick="closeTicketModal()">❌ Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/specialist_dashboard.js') }}"></script>
+<script>
+// Загрузка аватара
+async function uploadAvatar(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Проверка размера файла (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Файл слишком большой. Максимальный размер: 5MB');
+        return;
+    }
+    
+    // Проверка типа файла
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        alert('Недопустимый тип файла. Разрешены: PNG, JPG, JPEG, GIF, WEBP');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('avatar', file);
+    
+    try {
+        const response = await fetch('/api/upload-avatar', {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: formData
+        });
+        
+        if (response.status === 401) {
+            alert('Сессия истекла. Пожалуйста, войдите в систему снова.');
+            window.location.href = '/login';
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Обновляем аватар на странице
+            const avatarContainer = document.querySelector('.specialist-avatar-container');
+            if (avatarContainer) {
+                const existingImg = avatarContainer.querySelector('.specialist-avatar');
+                const existingPlaceholder = avatarContainer.querySelector('.specialist-avatar-placeholder');
+                
+                if (existingImg) {
+                    existingImg.src = data.avatar_url + '?t=' + Date.now();
+                } else if (existingPlaceholder) {
+                    existingPlaceholder.outerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" alt="Avatar" class="specialist-avatar" id="specialistAvatar" onclick="document.getElementById('avatarUploadInput').click();">`;
+                } else {
+                    const newImg = document.createElement('img');
+                    newImg.src = data.avatar_url + '?t=' + Date.now();
+                    newImg.className = 'specialist-avatar';
+                    newImg.id = 'specialistAvatar';
+                    newImg.alt = 'Avatar';
+                    newImg.onclick = () => document.getElementById('avatarUploadInput').click();
+                    avatarContainer.insertBefore(newImg, avatarContainer.firstChild);
+                }
+            }
+            
+            alert('✅ Фото профиля успешно загружено!');
+        } else {
+            alert('Ошибка загрузки: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        console.error('Error uploading avatar:', error);
+        alert('Произошла ошибка при загрузке фото');
+    }
+}
+
+// Загрузка активного предложения
+let currentDispatchId = null;
+
+async function loadPendingDispatch() {
+    try {
+        const response = await fetch('/api/dispatches/active', {
+            credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.dispatch && data.dispatch.status === 'PENDING') {
+                currentDispatchId = data.dispatch.id;
+                const notification = document.getElementById('dispatchNotification');
+                const notificationText = document.getElementById('dispatchNotificationText');
+                
+                if (notification && notificationText) {
+                    notificationText.textContent = `Оператор отправил вас к клиенту по адресу: ${data.dispatch.client_address || 'Адрес не указан'}`;
+                    notification.style.display = 'block';
+                }
+            } else {
+                const notification = document.getElementById('dispatchNotification');
+                if (notification) {
+                    notification.style.display = 'none';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading pending dispatch:', error);
+    }
+}
+
+// Принятие предложения
+async function acceptDispatch() {
+    if (!currentDispatchId) return;
+    
+    const acceptBtn = document.getElementById('acceptDispatchBtn');
+    if (acceptBtn) {
+        acceptBtn.disabled = true;
+        acceptBtn.textContent = 'Принятие...';
+    }
+    
+    try {
+        const response = await fetch(`/api/dispatches/${currentDispatchId}/accept`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                alert('Предложение принято! Теперь вы можете перейти к маршруту.');
+                dismissDispatchNotification();
+                // Обновляем ссылку на маршрут в навигации
+                const routeLink = document.getElementById('routeLink');
+                if (routeLink) {
+                    routeLink.href = `/route/${currentDispatchId}`;
+                    routeLink.style.display = 'inline-block';
+                }
+            } else {
+                alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        } else {
+            alert('Ошибка принятия предложения');
+        }
+    } catch (error) {
+        console.error('Error accepting dispatch:', error);
+        alert('Произошла ошибка при принятии предложения');
+    } finally {
+        if (acceptBtn) {
+            acceptBtn.disabled = false;
+            acceptBtn.textContent = '✓ Принять';
+        }
+    }
+}
+
+// Закрытие уведомления
+function dismissDispatchNotification() {
+    const notification = document.getElementById('dispatchNotification');
+    if (notification) {
+        notification.style.display = 'none';
+    }
+}
+
+// Загружаем предложение при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    loadPendingDispatch();
+    // Обновляем каждые 10 секунд
+    setInterval(loadPendingDispatch, 10000);
+});
+
+// Экспортируем функции для использования в onclick
+window.acceptDispatch = acceptDispatch;
+window.dismissDispatchNotification = dismissDispatchNotification;
+</script>
+{% endblock %}

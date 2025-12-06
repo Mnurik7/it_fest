@@ -1,0 +1,7 @@
+{
+  "client_id": "1075480559127-25beuol0kmhqe5cmuq2t33ph8uj7gh72.apps.googleusercontent.com",
+  "client_secret": "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",
+  "redirect_uri": "http://localhost:5000/api/ai-scrum/integrations/google-meet/callback",
+  "enabled": true,
+  "updated_at": "2025-12-05T16:06:37.478701"
+}

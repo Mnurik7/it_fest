@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Чатбот о мошенничестве{% endblock %}
+
+{% block extra_head %}
+<style>
+    .chatbot-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chatbot-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        border-radius: 16px;
+        color: white;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .chatbot-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .chatbot-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        font-weight: 300;
+    }
+
+    .back-button {
+        position: absolute;
+        top: 2rem;
+        left: 2rem;
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid white;
+        color: white;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        backdrop-filter: blur(10px);
+    }
+
+    .back-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .chatbot-header {
+        position: relative;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+        background: var(--background-alt);
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-height: 400px;
+    }
+
+    .message {
+        display: flex;
+        gap: 1rem;
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .message.user {
+        flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .message.user .message-avatar {
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        color: white;
+    }
+
+    .message.bot .message-avatar {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        color: white;
+    }
+
+    .message-content {
+        max-width: 70%;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        line-height: 1.6;
+        word-wrap: break-word;
+    }
+
+    .message.user .message-content {
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .message.bot .message-content {
+        background: white;
+        color: var(--text-color);
+        border: 1px solid var(--border-light);
+        border-bottom-left-radius: 4px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .message-time {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+        opacity: 0.7;
+    }
+
+    .chat-input-container {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-light);
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 1rem 1.25rem;
+        border: 2px solid var(--border-light);
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: inherit;
+        resize: none;
+        transition: all 0.2s;
+    }
+
+    .chat-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .send-button {
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+    }
+
+    .send-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(139, 30, 45, 0.3);
+    }
+
+    .send-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .loading-indicator {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .loading-dots {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .loading-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+        0%, 80%, 100% {
+            transform: scale(0);
+        }
+        40% {
+            transform: scale(1);
+        }
+    }
+
+    .suggested-questions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .suggested-question {
+        padding: 0.75rem 1.25rem;
+        background: white;
+        border: 2px solid var(--border-light);
+        border-radius: 20px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: var(--text-color);
+    }
+
+    .suggested-question:hover {
+        border-color: var(--primary-color);
+        background: var(--background-alt);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state-text {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-subtext {
+        font-size: 0.875rem;
+        opacity: 0.7;
+    }
+
+    /* Scrollbar styling */
+    .chat-messages::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+        background: var(--background-alt);
+        border-radius: 4px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chatbot-container">
+    <div class="chatbot-header">
+        <a href="{{ url_for('fraud_detection') }}" class="back-button">
+            <span>←</span>
+            <span>Назад</span>
+        </a>
+        <h1>
+            <span>🤖</span>
+            Чатбот о мошенничестве
+        </h1>
+        <p>Задайте любой вопрос о мошенничестве, защите и безопасности транзакций</p>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+        <div class="empty-state">
+            <div class="empty-state-icon">💬</div>
+            <div class="empty-state-text">Добро пожаловать в чатбот о мошенничестве!</div>
+            <div class="empty-state-subtext">Задайте вопрос или выберите один из предложенных ниже</div>
+        </div>
+    </div>
+
+    <div class="suggested-questions" id="suggested-questions">
+        <div class="suggested-question" onclick="sendSuggestedQuestion('Что такое фишинг и как от него защититься?')">
+            Что такое фишинг?
+        </div>
+        <div class="suggested-question" onclick="sendSuggestedQuestion('Какие признаки мошеннической транзакции?')">
+            Признаки мошенничества
+        </div>
+        <div class="suggested-question" onclick="sendSuggestedQuestion('Что делать при подозрительной транзакции?')">
+            Что делать при подозрении?
+        </div>
+        <div class="suggested-question" onclick="sendSuggestedQuestion('Как защитить мобильный банкинг?')">
+            Защита мобильного банкинга
+        </div>
+        <div class="suggested-question" onclick="sendSuggestedQuestion('Какие виды мошенничества существуют?')">
+            Виды мошенничества
+        </div>
+    </div>
+
+    <div class="chat-input-container">
+        <textarea 
+            class="chat-input" 
+            id="chat-input" 
+            placeholder="Задайте ваш вопрос о мошенничестве..."
+            rows="1"
+            onkeydown="handleKeyPress(event)"
+        ></textarea>
+        <button class="send-button" id="send-button" onclick="sendMessage()">
+            <span>Отправить</span>
+            <span>➤</span>
+        </button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/fraud_chatbot.js') }}"></script>
+{% endblock %}
+

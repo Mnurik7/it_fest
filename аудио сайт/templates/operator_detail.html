@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Оператор: {{ operator.username }} - AI Help Desk{% endblock %}
+
+{% block content %}
+<div class="operator-detail-container">
+    <div class="operator-detail-header">
+        <a href="/admin" class="btn btn-secondary">← Назад к админ-панели</a>
+        <h1>Оператор: {{ operator.username }}</h1>
+    </div>
+    
+    <div class="operator-detail-content">
+        <!-- Основная информация -->
+        <div class="operator-info-section">
+            <div class="operator-profile-card">
+                <div class="operator-avatar-large">👤</div>
+                <div class="operator-profile-info">
+                    <h2>{{ operator.username }}</h2>
+                    <div class="profile-detail">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value">{{ operator.email }}</span>
+                    </div>
+                    {% if operator.department %}
+                    <div class="profile-detail">
+                        <span class="detail-label">Отдел:</span>
+                        <span class="detail-value">{{ operator.department }}</span>
+                    </div>
+                    {% endif %}
+                    {% if operator.created_at %}
+                    <div class="profile-detail">
+                        <span class="detail-label">Регистрация:</span>
+                        <span class="detail-value">{{ operator.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Статистика -->
+        <div class="operator-stats-section">
+            <h2 class="section-title">📊 Статистика</h2>
+            <div class="stats-grid">
+                <div class="stat-card-large">
+                    <div class="stat-icon-large">💬</div>
+                    <div class="stat-content-large">
+                        <div class="stat-value-large">{{ total_chats }}</div>
+                        <div class="stat-label-large">Всего чатов</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-large">
+                    <div class="stat-icon-large">✅</div>
+                    <div class="stat-content-large">
+                        <div class="stat-value-large">{{ closed_chats }}</div>
+                        <div class="stat-label-large">Закрыто</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-large">
+                    <div class="stat-icon-large">🔄</div>
+                    <div class="stat-content-large">
+                        <div class="stat-value-large">{{ active_chats }}</div>
+                        <div class="stat-label-large">Активных</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-large">
+                    <div class="stat-icon-large">⏳</div>
+                    <div class="stat-content-large">
+                        <div class="stat-value-large">{{ waiting_chats }}</div>
+                        <div class="stat-label-large">Ожидающих</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-large">
+                    <div class="stat-icon-large">⭐</div>
+                    <div class="stat-content-large">
+                        <div class="stat-value-large">{{ avg_rating if avg_rating > 0 else '-' }}</div>
+                        <div class="stat-label-large">Средняя оценка</div>
+                        {% if avg_rating > 0 %}
+                        <div class="stat-rating-large">
+                            {% for i in range(5) %}
+                                {% if i < avg_rating|round %}
+                                    ⭐
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            {% endfor %}
+                            <span style="margin-left: 0.5rem;">({{ total_ratings }} оценок)</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="stat-card-large">
+                    <div class="stat-icon-large">📋</div>
+                    <div class="stat-content-large">
+                        <div class="stat-value-large">{{ tickets_in_department }}</div>
+                        <div class="stat-label-large">Тикетов в отделе</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-large">
+                    <div class="stat-icon-large">✅</div>
+                    <div class="stat-content-large">
+                        <div class="stat-value-large">{{ resolved_tickets }}</div>
+                        <div class="stat-label-large">Решено тикетов</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Последняя активность -->
+        {% if last_closed_chat %}
+        <div class="operator-activity-section">
+            <h2 class="section-title">🕐 Последняя активность</h2>
+            <div class="activity-card">
+                <div class="activity-info">
+                    <div class="activity-label">Последний закрытый чат:</div>
+                    <div class="activity-value">
+                        Чат #{{ last_closed_chat.id }} закрыт {{ last_closed_chat.closed_at.strftime('%d.%m.%Y в %H:%M') }}
+                        {% if last_closed_chat.rating %}
+                        <span class="activity-rating">
+                            Оценка: {{ '⭐' * last_closed_chat.rating }}{{ '☆' * (5 - last_closed_chat.rating) }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- История чатов -->
+        {% if all_chats %}
+        <div class="operator-chats-section">
+            <h2 class="section-title">💬 История чатов (последние 20)</h2>
+            <div class="chats-list-detail">
+                {% for chat in all_chats %}
+                <div class="chat-item-detail">
+                    <div class="chat-item-header-detail">
+                        <div class="chat-item-id">Чат #{{ chat.id }}</div>
+                        <div class="chat-item-status">
+                            {% if chat.status == 'ACTIVE' %}
+                                <span class="status-badge status-active">✅ Активен</span>
+                            {% elif chat.status == 'CLOSED' %}
+                                <span class="status-badge status-closed">🔒 Закрыт</span>
+                            {% else %}
+                                <span class="status-badge status-waiting">⏳ Ожидает</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="chat-item-info-detail">
+                        <div class="chat-item-user">Клиент: {{ chat.user.username if chat.user else 'Неизвестно' }}</div>
+                        <div class="chat-item-time">Создан: {{ chat.created_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                        {% if chat.closed_at %}
+                        <div class="chat-item-time">Закрыт: {{ chat.closed_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                        {% endif %}
+                        {% if chat.rating %}
+                        <div class="chat-item-rating">Оценка: {{ '⭐' * chat.rating }}{{ '☆' * (5 - chat.rating) }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.operator-detail-container {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: var(--spacing-xl);
+    height: 100%;
+    overflow-y: auto;
+}
+
+.operator-detail-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.operator-detail-header h1 {
+    margin: 0;
+}
+
+.operator-info-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.operator-profile-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl);
+}
+
+.operator-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    flex-shrink: 0;
+}
+
+.operator-profile-info h2 {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: 2rem;
+}
+
+.profile-detail {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1rem;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--color-text-light);
+}
+
+.detail-value {
+    color: var(--color-text);
+}
+
+.operator-stats-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.stat-card-large {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    transition: var(--transition);
+}
+
+.stat-card-large:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.stat-icon-large {
+    font-size: 3rem;
+    flex-shrink: 0;
+}
+
+.stat-content-large {
+    flex: 1;
+}
+
+.stat-value-large {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.2;
+}
+
+.stat-label-large {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: var(--spacing-xs);
+}
+
+.stat-rating-large {
+    font-size: 1.25rem;
+    color: #fbbf24;
+    margin-top: var(--spacing-xs);
+}
+
+.operator-activity-section,
+.operator-chats-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.activity-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+}
+
+.activity-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.activity-label {
+    font-weight: 600;
+    color: var(--color-text-light);
+}
+
+.activity-value {
+    color: var(--color-text);
+    font-size: 1.125rem;
+}
+
+.activity-rating {
+    display: inline-block;
+    margin-left: var(--spacing-md);
+    color: #fbbf24;
+}
+
+.chats-list-detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.chat-item-detail {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    transition: var(--transition);
+}
+
+.chat-item-detail:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+.chat-item-header-detail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+}
+
+.chat-item-id {
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: var(--color-text);
+}
+
+.chat-item-info-detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+}
+
+.chat-item-user {
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.chat-item-rating {
+    color: #fbbf24;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .operator-detail-container {
+        padding: var(--spacing-md);
+    }
+    
+    .operator-profile-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chat-item-header-detail {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+}
+</style>
+{% endblock %}
+

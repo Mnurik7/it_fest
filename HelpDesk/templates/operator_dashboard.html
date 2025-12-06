@@ -1,0 +1,896 @@
+{% extends "base.html" %}
+
+{% block title %}Панель оператора - HelpDesk{% endblock %}
+
+{% block extra_head %}
+<style>
+    main.main-content {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    .operator-dashboard {
+        max-width: 1800px;
+        width: 100%;
+        min-height: calc(100vh - 120px);
+        margin: 0 auto;
+        padding: 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        display: flex;
+        flex-direction: column;
+        background: #F5F7FA;
+        box-sizing: border-box;
+    }
+
+    .operator-header {
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        padding: 2rem 0;
+        color: white;
+        box-shadow: 0 4px 12px rgba(139, 30, 45, 0.15);
+    }
+
+    .operator-header-inner {
+        max-width: 1800px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .operator-header-content h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .operator-header-content p {
+        font-size: 1rem;
+        opacity: 0.95;
+        margin: 0;
+    }
+
+    .operator-main {
+        max-width: 1800px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 2rem;
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 1.5rem;
+        flex: 1;
+    }
+
+    .chat-section {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        min-height: 600px;
+        max-height: calc(100vh - 280px);
+        border: 1px solid #E5E7EB;
+    }
+
+    .chat-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #E5E7EB;
+        background: linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%);
+    }
+
+    .chat-header h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1F2937;
+        margin: 0;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        background: #F9FAFB;
+    }
+
+    .message {
+        display: flex;
+        gap: 1rem;
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+        flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .message.user .message-avatar {
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        color: white;
+    }
+
+    .message.operator .message-avatar {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        color: white;
+    }
+
+    .message-content {
+        max-width: 70%;
+        padding: 0.875rem 1.125rem;
+        border-radius: 14px;
+        line-height: 1.6;
+        word-wrap: break-word;
+        font-size: 0.9375rem;
+    }
+
+    .message.user .message-content {
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        color: white;
+    }
+
+    .message.operator .message-content {
+        background: white;
+        color: #1F2937;
+        border: 1px solid #E5E7EB;
+    }
+
+    .message-time {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 0.5rem;
+    }
+
+    .message.operator .message-time {
+        color: #9CA3AF;
+    }
+
+    .chat-input-container {
+        padding: 1.5rem;
+        border-top: 1px solid #E5E7EB;
+        background: white;
+    }
+
+    .chat-input-wrapper {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 0.875rem 1.125rem;
+        border: 2px solid #E5E7EB;
+        border-radius: 12px;
+        font-size: 0.9375rem;
+        resize: none;
+        min-height: 52px;
+        max-height: 120px;
+        outline: none;
+    }
+
+    .chat-input:focus {
+        border-color: #8B1E2D;
+    }
+
+    .send-btn {
+        padding: 0.875rem 1.75rem;
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .send-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #7A1A28 0%, #8B1E2D 100%);
+    }
+
+    .send-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .sidebar-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        border: 1px solid #E5E7EB;
+    }
+
+    .sidebar-card h3 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1F2937;
+        margin: 0 0 1rem 0;
+    }
+
+    .analyzer-result {
+        background: #F9FAFB;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: #4B5563;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .quick-replies {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .quick-reply-btn {
+        padding: 0.75rem 1rem;
+        background: #F3F4F6;
+        border: 1px solid #E5E7EB;
+        border-radius: 8px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+    }
+
+    .quick-reply-btn:hover {
+        background: #E5E7EB;
+        border-color: #8B1E2D;
+    }
+
+    .action-btn {
+        width: 100%;
+        padding: 0.875rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        margin-top: 0.5rem;
+    }
+
+    .btn-analyze {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        color: white;
+    }
+
+    .btn-call-master {
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        color: white;
+    }
+
+    .btn-analyze:hover, .btn-call-master:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .message-item {
+        background: #F9FAFB;
+        border: 1px solid #E5E7EB;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .message-item:hover {
+        border-color: #8B1E2D;
+        background: #FEF2F2;
+    }
+
+    .message-item.selected {
+        border-color: #8B1E2D;
+        background: #FEF2F2;
+        box-shadow: 0 2px 8px rgba(139, 30, 45, 0.15);
+    }
+
+    .message-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .message-item-user {
+        font-weight: 600;
+        color: #1F2937;
+    }
+
+    .message-item-time {
+        font-size: 0.75rem;
+        color: #6B7280;
+    }
+
+    .message-item-text {
+        font-size: 0.875rem;
+        color: #4B5563;
+        margin-bottom: 0.5rem;
+    }
+
+    .message-item-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-pending {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+
+    .status-answered {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #9CA3AF;
+    }
+
+    .empty-state-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="operator-dashboard">
+    <div class="operator-header">
+        <div class="operator-header-inner">
+            <div class="operator-header-content">
+                <h1>
+                    <span>👨‍💼</span>
+                    Панель оператора - {{ operator_type.replace('_', ' ').title() }}
+                </h1>
+                <p>Оператор: {{ username }}</p>
+            </div>
+            <a href="{{ url_for('logout') }}" style="color: white; text-decoration: none; padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); border-radius: 8px;">Выйти</a>
+        </div>
+    </div>
+
+    <div class="operator-main">
+        <div class="chat-section">
+            <div class="chat-header">
+                <h2>💬 Чат с клиентами</h2>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <h3>Выберите сообщение</h3>
+                    <p>Выберите сообщение клиента из списка справа</p>
+                </div>
+            </div>
+            <div class="chat-input-container" id="chatInputContainer" style="display: none;">
+                <div class="chat-input-wrapper">
+                    <textarea 
+                        id="chatInput" 
+                        class="chat-input" 
+                        placeholder="Введите ответ клиенту..."
+                        rows="1"
+                    ></textarea>
+                    <button id="sendBtn" class="send-btn" onclick="sendResponse()">Отправить</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-card">
+                <h3>📋 Сообщения клиентов</h3>
+                <div id="messagesList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏳</div>
+                        <p>Загрузка...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-card" id="analyzerCard" style="display: none;">
+                <h3>🔍 Анализатор сообщений</h3>
+                <button class="action-btn btn-analyze" onclick="analyzeMessage()">Анализировать сообщение</button>
+                <div id="analyzerResult" class="analyzer-result" style="display: none;"></div>
+            </div>
+
+            <div class="sidebar-card" id="quickRepliesCard" style="display: none;">
+                <h3>⚡ Быстрые ответы</h3>
+                <div class="quick-replies">
+                    <button class="quick-reply-btn" onclick="useQuickReply('Здравствуйте! Спасибо за обращение. Мы уже работаем над вашим вопросом.')">Здравствуйте! Спасибо за обращение...</button>
+                    <button class="quick-reply-btn" onclick="useQuickReply('Понял вашу проблему. Сейчас проверю и вернусь с ответом.')">Понял вашу проблему...</button>
+                    <button class="quick-reply-btn" onclick="useQuickReply('Для решения вашего вопроса мне нужна дополнительная информация. Можете уточнить?')">Нужна дополнительная информация...</button>
+                    <button class="quick-reply-btn" onclick="useQuickReply('Ваш вопрос передан специалисту. Ожидайте ответа в ближайшее время.')">Вопрос передан специалисту...</button>
+                    <button class="quick-reply-btn" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border: none; font-weight: 600;" onclick="useQuickReply('Специалисты отправлены по вашему адресу. Ожидайте прибытия в ближайшее время.')">🚗 Специалисты отправлены по вашему адресу</button>
+                </div>
+            </div>
+
+            <div class="sidebar-card" id="masterCard" style="display: none;">
+                <h3>🛠️ Вызов мастера</h3>
+                <button class="action-btn btn-call-master" onclick="callMaster()">Вызвать мастера (AI анализ)</button>
+                <div id="masterResult" class="analyzer-result" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentMessageId = null;
+let currentTicketId = null;
+let messages = [];
+
+async function loadMessages(skipChatUpdate = false) {
+    try {
+        const response = await fetch('/api/operator/messages');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Сохраняем выбранное сообщение и его состояние перед обновлением
+            const savedMessageId = currentMessageId;
+            const savedTicketId = currentTicketId;
+            const wasChatVisible = document.getElementById('chatInputContainer').style.display !== 'none';
+            
+            messages = data.messages;
+            renderMessagesList(messages);
+            
+            // Восстанавливаем выбор, если сообщение все еще существует
+            if (savedMessageId && messages.find(m => m.id === savedMessageId)) {
+                currentMessageId = savedMessageId;
+                currentTicketId = savedTicketId;
+                
+                // Обновляем чат только если он был открыт и не пропущено обновление
+                // И только если прошло достаточно времени с последней отправки сообщения
+                if (wasChatVisible && !skipChatUpdate) {
+                    const timeSinceLastSend = Date.now() - lastMessageSendTime;
+                    // Не обновляем чат, если прошло меньше 5 секунд с последней отправки
+                    // Это предотвращает исчезновение только что отправленных сообщений
+                    if (timeSinceLastSend > 5000) {
+                        const updatedMessage = messages.find(m => m.id === savedMessageId);
+                        if (updatedMessage) {
+                            renderChat(updatedMessage, false);
+                        }
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+    }
+}
+
+function renderMessagesList(messagesList) {
+    const container = document.getElementById('messagesList');
+    
+    if (!messagesList || messagesList.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <p>Нет сообщений</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = messagesList.map(msg => {
+        const date = new Date(msg.created_at).toLocaleString('ru-RU');
+        const status = msg.status || 'pending';
+        const statusText = status === 'answered' ? 'Отвечено' : 'Ожидает ответа';
+        const statusClass = status === 'answered' ? 'status-answered' : 'status-pending';
+        const ticketId = msg.ticket_id || null;
+        
+        return `
+            <div class="message-item ${currentMessageId === msg.id ? 'selected' : ''}" onclick="selectMessage(${msg.id}, ${ticketId !== null ? ticketId : 'null'})">
+                <div class="message-item-header">
+                    <span class="message-item-user">👤 ${msg.user}</span>
+                    <span class="message-item-time">${date}</span>
+                </div>
+                <div class="message-item-text">${msg.message.substring(0, 100)}${msg.message.length > 100 ? '...' : ''}</div>
+                <span class="message-item-status ${statusClass}">${statusText}</span>
+                ${ticketId ? `<div style="font-size: 0.75rem; color: #6B7280; margin-top: 0.25rem;">Тикет #${ticketId}</div>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function selectMessage(messageId, ticketId) {
+    currentMessageId = messageId;
+    currentTicketId = ticketId;
+    
+    // Обновляем список
+    renderMessagesList(messages);
+    
+    // Находим сообщение
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+    
+    // Показываем чат (принудительно, так как это ручной выбор)
+    renderChat(message, false);
+    
+    // Показываем панели
+    document.getElementById('chatInputContainer').style.display = 'block';
+    document.getElementById('analyzerCard').style.display = 'block';
+    document.getElementById('quickRepliesCard').style.display = 'block';
+    document.getElementById('masterCard').style.display = 'block';
+}
+
+function renderChat(message, skipIfRecent = true) {
+    const container = document.getElementById('chatMessages');
+    
+    // Сохраняем текущую позицию прокрутки
+    const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+    
+    // Получаем все сообщения из БД в правильном порядке
+    const allMessages = [];
+    
+    // Добавляем исходное сообщение клиента
+    allMessages.push({
+        role: 'user',
+        content: message.message,
+        timestamp: message.created_at
+    });
+    
+    // Добавляем историю чата с оператором (если есть)
+    // ВАЖНО: operator_chat_history содержит ВСЕ сообщения в хронологическом порядке
+    const operatorChatHistory = message.operator_chat_history || [];
+    if (operatorChatHistory.length > 0) {
+        operatorChatHistory.forEach(msg => {
+            allMessages.push({
+                role: msg.role,
+                content: msg.content || msg.message || msg.response || '',
+                timestamp: msg.timestamp || msg.answered_at || msg.created_at || message.created_at
+            });
+        });
+    } else {
+        // Для обратной совместимости показываем ответы из operator_messages
+        const operatorMessages = message.operator_messages || [];
+        if (operatorMessages.length > 0) {
+            operatorMessages.forEach(msg => {
+                const responseText = typeof msg === 'string' ? msg : (msg.response || msg);
+                const answeredAt = typeof msg === 'object' ? (msg.answered_at || message.answered_at) : message.answered_at;
+                allMessages.push({
+                    role: 'operator',
+                    content: responseText,
+                    timestamp: answeredAt
+                });
+            });
+        } else if (message.operator_response) {
+            allMessages.push({
+                role: 'operator',
+                content: message.operator_response,
+                timestamp: message.answered_at || message.created_at
+            });
+        }
+    }
+    
+    // Сортируем все сообщения по времени
+    allMessages.sort((a, b) => {
+        const timeA = new Date(a.timestamp || 0).getTime();
+        const timeB = new Date(b.timestamp || 0).getTime();
+        return timeA - timeB;
+    });
+    
+    // ВАЖНО: Проверяем, не было ли только что отправлено сообщение
+    // Если было, НЕ перезаписываем чат, чтобы не потерять только что отправленное сообщение
+    if (skipIfRecent) {
+        const timeSinceLastSend = Date.now() - lastMessageSendTime;
+        const hasRecentMessage = timeSinceLastSend < 5000; // Если прошло меньше 5 секунд с отправки
+        
+        // Если было недавно отправлено сообщение, НЕ перезаписываем чат вообще
+        // Это предотвращает исчезновение только что отправленных сообщений
+        if (hasRecentMessage) {
+            // Проверяем, есть ли уже сообщения в чате
+            const existingMessages = container.querySelectorAll('.message');
+            if (existingMessages.length > 0) {
+                // НЕ перезаписываем чат, если есть недавно отправленное сообщение
+                // Сообщение уже видно в чате и не должно исчезать
+                return;
+            }
+        }
+    }
+    
+    // Перезаписываем весь чат данными из БД
+    // Это гарантирует, что все сообщения из БД будут отображены
+    let html = '';
+    
+    allMessages.forEach(msg => {
+        if (msg.role === 'operator') {
+            html += `
+                <div class="message operator">
+                    <div class="message-avatar">👨‍💼</div>
+                    <div class="message-content">
+                        ${msg.content}
+                        <div class="message-time">${new Date(msg.timestamp).toLocaleString('ru-RU')}</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="message user">
+                    <div class="message-avatar">👤</div>
+                    <div class="message-content">
+                        ${msg.content}
+                        <div class="message-time">${new Date(msg.timestamp).toLocaleString('ru-RU')}</div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    container.innerHTML = html;
+    
+    // Восстанавливаем позицию прокрутки (прокручиваем вниз, если были внизу)
+    if (wasAtBottom) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+async function sendResponse() {
+    const input = document.getElementById('chatInput');
+    const response = input.value.trim();
+    
+    if (!response || !currentMessageId) {
+        if (!currentMessageId) {
+            alert('Пожалуйста, выберите сообщение клиента для ответа');
+        }
+        return;
+    }
+    
+    // Сохраняем текущие ID перед отправкой
+    const savedMessageId = currentMessageId;
+    const savedTicketId = currentTicketId;
+    
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    
+    // Показываем временное сообщение в чате
+    const container = document.getElementById('chatMessages');
+    const tempMessage = document.createElement('div');
+    tempMessage.className = 'message operator';
+    tempMessage.innerHTML = `
+        <div class="message-avatar">👨‍💼</div>
+        <div class="message-content" style="opacity: 0.6;">
+            ${response}
+            <div class="message-time">Отправляется...</div>
+        </div>
+    `;
+    container.appendChild(tempMessage);
+    container.scrollTop = container.scrollHeight;
+    
+    try {
+        const response_data = await fetch('/api/operator/respond', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message_id: savedMessageId,
+                ticket_id: savedTicketId,
+                response: response
+            })
+        });
+        
+        const data = await response_data.json();
+        
+        if (!response_data.ok) {
+            // Удаляем временное сообщение при ошибке
+            if (tempMessage && tempMessage.parentNode) {
+                tempMessage.remove();
+            }
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка') + (data.message ? '\n' + data.message : ''));
+            sendBtn.disabled = false;
+            return;
+        }
+        
+        if (data.success) {
+            input.value = '';
+            
+            // Заменяем временное сообщение на реальное (не удаляем, чтобы не было мерцания)
+            if (tempMessage && tempMessage.parentNode) {
+                tempMessage.className = 'message operator';
+                tempMessage.style.opacity = '1';
+                tempMessage.innerHTML = `
+                    <div class="message-avatar">👨‍💼</div>
+                    <div class="message-content">
+                        ${response}
+                        <div class="message-time">${new Date().toLocaleString('ru-RU')}</div>
+                    </div>
+                `;
+            }
+            
+            // Обновляем локально объект сообщения, чтобы не потерять данные
+            const currentMessage = messages.find(m => m.id === savedMessageId);
+            if (currentMessage) {
+                // Добавляем новое сообщение в локальную историю
+                if (!currentMessage.operator_chat_history) {
+                    currentMessage.operator_chat_history = [];
+                }
+                currentMessage.operator_chat_history.push({
+                    role: 'operator',
+                    content: response,
+                    operator_name: 'Вы',
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Обновляем operator_messages для совместимости
+                if (!currentMessage.operator_messages) {
+                    currentMessage.operator_messages = [];
+                }
+                currentMessage.operator_messages.push({
+                    response: response,
+                    operator_name: 'Вы',
+                    answered_at: new Date().toISOString()
+                });
+            }
+            
+            // Запоминаем время отправки сообщения
+            lastMessageSendTime = Date.now();
+            
+            // Обновляем список сообщений и чат через 2 секунды после отправки
+            // Это гарантирует, что данные из БД будут загружены и отображены
+            setTimeout(async () => {
+                // Обновляем список сообщений и чат
+                await loadMessages(false);
+                
+                // Восстанавливаем выбор сообщения
+                currentMessageId = savedMessageId;
+                currentTicketId = savedTicketId;
+                
+                // Обновляем список, чтобы показать выбранное сообщение
+                renderMessagesList(messages);
+                
+                // Обновляем чат с данными из БД (принудительно)
+                const updatedMessage = messages.find(m => m.id === savedMessageId);
+                if (updatedMessage) {
+                    renderChat(updatedMessage, false); // Принудительно обновляем
+                }
+            }, 2000);
+        } else {
+            // Удаляем временное сообщение при ошибке
+            if (tempMessage && tempMessage.parentNode) {
+                tempMessage.remove();
+            }
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        // Удаляем временное сообщение при ошибке
+        tempMessage.remove();
+        alert('Ошибка при отправке ответа. Пожалуйста, попробуйте еще раз.');
+    } finally {
+        sendBtn.disabled = false;
+    }
+}
+
+async function analyzeMessage() {
+    if (!currentMessageId) return;
+    
+    const message = messages.find(m => m.id === currentMessageId);
+    if (!message) return;
+    
+    const resultDiv = document.getElementById('analyzerResult');
+    resultDiv.style.display = 'block';
+    resultDiv.textContent = 'Анализ...';
+    
+    try {
+        const response = await fetch('/api/operator/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message.message,
+                ticket_id: currentTicketId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            resultDiv.innerHTML = data.analysis.replace(/\n/g, '<br>');
+        } else {
+            resultDiv.textContent = 'Ошибка: ' + (data.error || 'Неизвестная ошибка');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        resultDiv.textContent = 'Ошибка при анализе';
+    }
+}
+
+async function callMaster() {
+    if (!currentMessageId) return;
+    
+    const resultDiv = document.getElementById('masterResult');
+    resultDiv.style.display = 'block';
+    resultDiv.textContent = 'Анализ ситуации...';
+    
+    try {
+        const response = await fetch('/api/operator/call-master', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message_id: currentMessageId,
+                ticket_id: currentTicketId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            resultDiv.innerHTML = data.recommendation.replace(/\n/g, '<br>');
+            if (data.should_call_master) {
+                resultDiv.style.background = '#FEF3C7';
+                resultDiv.style.border = '1px solid #FCD34D';
+            }
+        } else {
+            resultDiv.textContent = 'Ошибка: ' + (data.error || 'Неизвестная ошибка');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        resultDiv.textContent = 'Ошибка при анализе';
+    }
+}
+
+function useQuickReply(text) {
+    document.getElementById('chatInput').value = text;
+}
+
+// Автоматическое изменение высоты textarea
+document.getElementById('chatInput').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+});
+
+// Загружаем сообщения при загрузке страницы
+loadMessages();
+
+// Обновляем сообщения каждые 3 секунды
+// ВАЖНО: не обновляем чат автоматически, чтобы не терять только что отправленные сообщения
+// Чат обновляется только вручную при выборе сообщения или через 5 секунд после отправки
+let lastMessageSendTime = 0;
+setInterval(() => {
+    const now = Date.now();
+    // Если прошло больше 5 секунд с последней отправки сообщения, можно обновить чат
+    // Иначе обновляем только список сообщений, чтобы не потерять только что отправленные сообщения
+    if (now - lastMessageSendTime > 5000) {
+        loadMessages(false);  // Обновляем и список, и чат (если открыт)
+    } else {
+        loadMessages(true);  // Обновляем только список, не чат
+    }
+}, 3000);
+</script>
+{% endblock %}

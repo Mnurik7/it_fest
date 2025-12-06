@@ -1,0 +1,1798 @@
+{% extends "base.html" %}
+
+{% block title %}AI-Procure - HelpDesk{% endblock %}
+
+{% block content %}
+<!-- Онбординг для новых пользователей -->
+<div id="onboarding-overlay" class="onboarding-overlay" style="display: none;">
+    <div class="onboarding-modal">
+        <div class="onboarding-header">
+            <h2>👋 Добро пожаловать в AI-Procure!</h2>
+            <button class="onboarding-close" onclick="closeOnboarding()">×</button>
+        </div>
+        <div class="onboarding-content">
+            <div class="onboarding-step active" id="onboarding-step-1">
+                <div class="onboarding-icon">🚀</div>
+                <h3>Быстрый старт</h3>
+                <p>AI-Procure поможет вам анализировать тендеры и находить лучшие возможности для участия.</p>
+                <p><strong>Как это работает:</strong></p>
+                <ol>
+                    <li>Вставьте текст тендера или опишите его параметры</li>
+                    <li>Выберите функции анализа (поставщики, риски, цены)</li>
+                    <li>Получите детальный отчёт с рекомендациями</li>
+                </ol>
+            </div>
+            <div class="onboarding-step" id="onboarding-step-2">
+                <div class="onboarding-icon">📊</div>
+                <h3>Основные функции</h3>
+                <ul>
+                    <li><strong>Анализ тендера</strong> - извлечение всех параметров автоматически</li>
+                    <li><strong>Подбор поставщиков</strong> - поиск релевантных партнёров</li>
+                    <li><strong>Анализ рисков</strong> - выявление потенциальных проблем</li>
+                    <li><strong>Анализ цен</strong> - сравнение с рыночными показателями</li>
+                </ul>
+            </div>
+            <div class="onboarding-step" id="onboarding-step-3">
+                <div class="onboarding-icon">💡</div>
+                <h3>Советы для начала</h3>
+                <ul>
+                    <li>Используйте кнопку "🤖 Заполнить AI" для быстрого создания текста тендера</li>
+                    <li>Начните с анализа одного тендера, чтобы понять процесс</li>
+                    <li>Проверяйте метрики для отслеживания качества анализа</li>
+                    <li>Используйте режим для новичков, если нужна помощь</li>
+                </ul>
+            </div>
+        </div>
+        <div class="onboarding-footer">
+            <div class="onboarding-progress">
+                <span id="onboarding-current">1</span> / <span id="onboarding-total">3</span>
+            </div>
+            <div class="onboarding-buttons">
+                <button class="btn btn-secondary" id="onboarding-prev" onclick="prevOnboardingStep()" style="display: none;">Назад</button>
+                <button class="btn btn-primary" id="onboarding-next" onclick="nextOnboardingStep()">Далее</button>
+                <button class="btn btn-primary" id="onboarding-start" onclick="startUsing()" style="display: none;">Начать работу</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Подсказки при наведении -->
+<div id="tooltip" class="tooltip"></div>
+
+<div class="procure-container">
+    <!-- Боковая панель навигации -->
+    <aside class="procure-sidebar">
+        <div class="sidebar-header">
+            <h2>AI-Procure</h2>
+            <p class="sidebar-subtitle">Интеллектуальный анализ тендеров</p>
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span>Система активна</span>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#quick-start" class="nav-item active" onclick="scrollToSection('quick-start', this)" data-tooltip="Начните отсюда! Здесь вы найдёте краткую инструкцию и быстрые действия">
+                <span class="nav-icon">🚀</span>
+                <span class="nav-text">Быстрый старт</span>
+            </a>
+            <a href="#analysis" class="nav-item" onclick="scrollToSection('analysis', this)" data-tooltip="Основная функция: вставьте текст тендера и получите полный анализ">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Анализ тендера</span>
+            </a>
+            <a href="#suppliers" class="nav-item" onclick="scrollToSection('suppliers', this)" data-tooltip="Результаты подбора поставщиков появятся здесь после анализа">
+                <span class="nav-icon">🔍</span>
+                <span class="nav-text">Поставщики</span>
+            </a>
+            <a href="#risks" class="nav-item" onclick="scrollToSection('risks', this)" data-tooltip="Анализ рисков и аффилированности появится здесь после анализа">
+                <span class="nav-icon">⚠️</span>
+                <span class="nav-text">Анализ рисков</span>
+            </a>
+            <a href="#reports" class="nav-item" onclick="scrollToSection('reports', this)" data-tooltip="Комплексный отчёт будет сгенерирован после анализа">
+                <span class="nav-icon">📄</span>
+                <span class="nav-text">Отчёты</span>
+            </a>
+            <a href="#data-collection" class="nav-item" onclick="scrollToSection('data-collection', this)" data-tooltip="Автоматический сбор тендеров из открытых источников">
+                <span class="nav-icon">📥</span>
+                <span class="nav-text">Сбор данных</span>
+            </a>
+            <a href="#metrics" class="nav-item" onclick="scrollToSection('metrics', this)" data-tooltip="Статистика производительности системы и качество анализа">
+                <span class="nav-icon">📈</span>
+                <span class="nav-text">Метрики</span>
+            </a>
+            <a href="#beginner" class="nav-item" onclick="scrollToSection('beginner', this)" data-tooltip="Пошаговые инструкции, рейтинг и поддержка для новичков">
+                <span class="nav-icon">🎓</span>
+                <span class="nav-text">Для новичков</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="stats-processed">0</span>
+                    <span class="stat-label">Обработано</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="stats-suppliers">0</span>
+                    <span class="stat-label">Поставщиков</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Основной контент -->
+    <main class="procure-main">
+        <!-- Быстрый старт -->
+        <section id="quick-start" class="content-section">
+            <div class="section-header">
+                <h1>🚀 Быстрый старт</h1>
+                <p>Начните анализ тендера за несколько кликов</p>
+                <button class="btn-help" onclick="showOnboarding()" title="Показать инструкцию">
+                    <span>❓</span>
+                    <span>Как это работает?</span>
+                </button>
+            </div>
+            
+            <!-- Пример использования -->
+            <div class="example-box">
+                <div class="example-header">
+                    <span class="example-icon">💡</span>
+                    <strong>Пример использования:</strong>
+                </div>
+                <div class="example-content">
+                    <p>1. Скопируйте текст тендера с сайта госзакупок или введите краткое описание</p>
+                    <p>2. Нажмите кнопку "🤖 Заполнить AI" для автоматического создания полного текста</p>
+                    <p>3. Выберите нужные функции анализа (все включены по умолчанию)</p>
+                    <p>4. Нажмите "Начать анализ" и получите детальный отчёт через несколько секунд</p>
+                </div>
+            </div>
+            
+            <div class="quick-actions">
+                <div class="action-card" onclick="scrollToSection('analysis')" data-tooltip="Начните с анализа тендера - это основная функция системы">
+                    <div class="action-icon">📊</div>
+                    <h3>Анализ тендера</h3>
+                    <p>Загрузите текст тендера и получите полный анализ</p>
+                    <div class="action-badge">Рекомендуется</div>
+                </div>
+                <div class="action-card" onclick="scrollToSection('data-collection')" data-tooltip="Автоматически соберите тендеры из открытых источников">
+                    <div class="action-icon">📥</div>
+                    <h3>Собрать тендеры</h3>
+                    <p>Автоматический сбор из открытых источников</p>
+                </div>
+                <div class="action-card" onclick="scrollToSection('beginner')" data-tooltip="Если вы новичок в тендерах, здесь найдёте пошаговые инструкции">
+                    <div class="action-icon">🎓</div>
+                    <h3>Режим новичка</h3>
+                    <p>Пошаговые инструкции и поддержка</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Анализ тендера -->
+        <section id="analysis" class="content-section">
+            <div class="section-header">
+                <h1>📊 Анализ тендера</h1>
+                <p>Извлечение параметров и комплексный анализ</p>
+            </div>
+            
+            <div class="analysis-panel">
+                <!-- Выбор функций -->
+                <div class="functionality-selector">
+                    <h3>
+                        Выберите функции анализа:
+                        <span class="help-icon" data-tooltip="Отметьте функции, которые хотите использовать. Все включены по умолчанию для полного анализа.">❓</span>
+                    </h3>
+                    <div class="functionality-grid">
+                        <label class="functionality-option" data-tooltip="Автоматически извлекает все параметры тендера: заказчик, бюджет, сроки, требования">
+                            <input type="checkbox" id="func-extract" checked>
+                            <span>📋 Извлечение параметров</span>
+                            <span class="option-badge">Обязательно</span>
+                        </label>
+                        <label class="functionality-option" data-tooltip="Находит подходящих поставщиков по критериям тендера и ранжирует их по релевантности">
+                            <input type="checkbox" id="func-suppliers" checked>
+                            <span>🔍 Подбор поставщиков</span>
+                        </label>
+                        <label class="functionality-option" data-tooltip="Выявляет потенциальные риски, аффилированность и подозрительные процедуры">
+                            <input type="checkbox" id="func-risks" checked>
+                            <span>⚠️ Анализ рисков</span>
+                        </label>
+                        <label class="functionality-option" data-tooltip="Сравнивает цены тендера с рыночными и выявляет аномалии">
+                            <input type="checkbox" id="func-price" checked>
+                            <span>💰 Анализ цен</span>
+                        </label>
+                        <label class="functionality-option" data-tooltip="Создаёт комплексный отчёт со всеми результатами анализа и рекомендациями">
+                            <input type="checkbox" id="func-report" checked>
+                            <span>📄 Генерация отчёта</span>
+                        </label>
+                    </div>
+                    <div class="functionality-hint">
+                        <span>💡</span>
+                        <span><strong>Совет:</strong> Рекомендуется оставить все функции включенными для получения полного анализа</span>
+                    </div>
+                </div>
+                
+                <!-- Ввод данных -->
+                <div class="input-panel">
+                    <div class="ai-assist-banner">
+                        <div class="banner-content">
+                            <div>
+                                <strong>🤖 Автозаполнение через AI</strong>
+                                <p>Введите краткое описание, и AI создаст полный текст тендера</p>
+                                <p class="banner-hint">💡 <strong>Совет:</strong> Можно ввести просто "Закупка компьютеров на 1 млн тенге" - AI сам создаст структурированный текст</p>
+                            </div>
+                            <button class="btn btn-ai" onclick="generateTenderTextWithAI()" id="generate-tender-btn">
+                                <span>🤖</span>
+                                <span>Заполнить AI</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="input-options">
+                        <label>
+                            Тип источника:
+                            <span class="help-icon" data-tooltip="Выберите откуда взят текст тендера. Это поможет системе лучше его обработать.">❓</span>
+                        </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="source-type" value="text" checked> Текст</label>
+                            <label><input type="radio" name="source-type" value="pdf"> PDF</label>
+                            <label><input type="radio" name="source-type" value="web"> Веб-сайт</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Поле для загрузки PDF -->
+                    <div id="pdf-source-field" class="source-field" style="display: none; margin-top: 1rem;">
+                        <label>
+                            Загрузить PDF файл:
+                            <span class="help-icon" data-tooltip="Выберите PDF файл с текстом тендера">❓</span>
+                        </label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="pdf-file-input" accept=".pdf" style="display: none;" onchange="handlePDFFileSelect(event)">
+                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('pdf-file-input').click()">
+                                <span>📄</span>
+                                <span>Выбрать PDF файл</span>
+                            </button>
+                            <span id="pdf-file-name" style="margin-left: 1rem; color: #059669; font-weight: 500;"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Поле для ввода ссылки на веб-сайт -->
+                    <div id="web-source-field" class="source-field" style="display: none; margin-top: 1rem;">
+                        <label>
+                            Ссылка на веб-сайт:
+                            <span class="help-icon" data-tooltip="Введите URL страницы с тендером (например, сайт госзакупок)">❓</span>
+                        </label>
+                        <input type="url" id="web-url-input" placeholder="https://example.com/tender" style="width: 100%; padding: 0.875rem; border: 2px solid #E5E7EB; border-radius: 8px; font-size: 0.9375rem; font-family: inherit; transition: all 0.2s; background: #FFFFFF;" onfocus="this.style.borderColor='#8B1E2D'; this.style.boxShadow='0 0 0 3px rgba(139, 30, 45, 0.1)';" onblur="this.style.borderColor='#E5E7EB'; this.style.boxShadow='none';">
+                        <div class="input-hint" style="margin-top: 0.5rem;">
+                            <span>💡</span>
+                            <span>Введите полную ссылку на страницу с тендером</span>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group" id="tender-text-wrapper">
+                        <label for="tender-text">
+                            Текст тендера:
+                            <span class="help-icon" data-tooltip="Вставьте полный текст тендера или краткое описание. Система автоматически извлечёт все параметры.">❓</span>
+                        </label>
+                        <textarea id="tender-text" rows="8" placeholder="Вставьте текст тендера или опишите его параметры:
+
+Пример краткого описания:
+- Заказчик: ТОО 'Компания'
+- Предмет: Закупка офисной техники
+- Бюджет: 5 000 000 тенге
+- Срок подачи заявок: до 15.01.2025
+- Требования: опыт работы от 3 лет, наличие лицензий"></textarea>
+                        <div class="input-hint">
+                            <span>💡</span>
+                            <span>Можно вставить текст из PDF, скопировать с сайта госзакупок или просто описать тендер своими словами</span>
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-info">
+                        <div class="info-card">
+                            <span class="info-icon">⏱️</span>
+                            <div>
+                                <strong>Время анализа:</strong>
+                                <p>Обычно занимает 10-30 секунд в зависимости от выбранных функций</p>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <span class="info-icon">✅</span>
+                            <div>
+                                <strong>Что вы получите:</strong>
+                                <p>Детальный анализ с параметрами, поставщиками, рисками и рекомендациями</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-primary btn-large" onclick="analyzeTender()" id="analyze-btn">
+                            <span>🔍</span>
+                            <span>Начать анализ</span>
+                        </button>
+                        <div class="button-hint">
+                            <span>💡</span>
+                            <span>Анализ займёт 10-30 секунд. Результаты появятся ниже и автоматически заполнят другие разделы.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="quick-example">
+                        <div class="example-divider">
+                            <span>или</span>
+                        </div>
+                        <button class="btn-link" onclick="loadExampleTender()" type="button">
+                            <span>📝</span>
+                            <span>Загрузить пример тендера для тестирования</span>
+                        </button>
+                        <p class="example-note">Используйте пример, чтобы понять, как работает система, не вводя реальные данные</p>
+                    </div>
+                </div>
+                
+                <!-- Результаты анализа -->
+                <div id="analysis-results" class="results-panel" style="display: none;"></div>
+            </div>
+        </section>
+        
+        <!-- Подбор поставщиков -->
+        <section id="suppliers" class="content-section">
+            <div class="section-header">
+                <h1>🔍 Подбор поставщиков</h1>
+                <p>Поиск и ранжирование релевантных поставщиков</p>
+            </div>
+            
+            <div class="info-banner">
+                <span class="info-icon">ℹ️</span>
+                <div>
+                    <strong>Как это работает:</strong>
+                    <p>После анализа тендера система автоматически найдёт подходящих поставщиков из базы данных. Результаты появятся здесь автоматически.</p>
+                </div>
+            </div>
+            
+            <div class="suppliers-panel">
+                <div id="suppliers-results" class="suppliers-list">
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <h3>Результаты появятся здесь</h3>
+                        <p>Сначала проанализируйте тендер в разделе "Анализ тендера"</p>
+                        <button class="btn btn-primary" onclick="scrollToSection('analysis')">
+                            <span>📊</span>
+                            <span>Перейти к анализу</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Анализ рисков -->
+        <section id="risks" class="content-section">
+            <div class="section-header">
+                <h1>⚠️ Анализ рисков</h1>
+                <p>Выявление потенциальных рисков и аффилированности</p>
+            </div>
+            
+            <div class="info-banner">
+                <span class="info-icon">ℹ️</span>
+                <div>
+                    <strong>Что анализируется:</strong>
+                    <p>Система проверяет аффилированность компаний, подозрительные процедуры, несоответствия в документации и прозрачность процесса.</p>
+                </div>
+            </div>
+            
+            <div class="risks-panel">
+                <div id="risks-results" class="risks-list">
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <h3>Результаты анализа рисков появятся здесь</h3>
+                        <p>После анализа тендера вы увидите детальную оценку всех рисков</p>
+                        <button class="btn btn-primary" onclick="scrollToSection('analysis')">
+                            <span>📊</span>
+                            <span>Перейти к анализу</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Отчёты -->
+        <section id="reports" class="content-section">
+            <div class="section-header">
+                <h1>📄 Отчёты</h1>
+                <p>Комплексные аналитические отчёты</p>
+            </div>
+            
+            <div class="info-banner">
+                <span class="info-icon">ℹ️</span>
+                <div>
+                    <strong>Что включает отчёт:</strong>
+                    <p>Исполнительное резюме, анализ тендера, подбор поставщиков, оценка рисков, рекомендации и заключение. Отчёт можно скачать в формате JSON.</p>
+                </div>
+            </div>
+            
+            <div class="reports-panel">
+                <div id="reports-results" class="reports-list">
+                    <div class="empty-state">
+                        <div class="empty-icon">📄</div>
+                        <h3>Отчёт будет сгенерирован после анализа</h3>
+                        <p>Комплексный отчёт появится здесь автоматически после завершения анализа тендера</p>
+                        <button class="btn btn-primary" onclick="scrollToSection('analysis')">
+                            <span>📊</span>
+                            <span>Перейти к анализу</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Сбор данных -->
+        <section id="data-collection" class="content-section">
+            <div class="section-header">
+                <h1>📥 Сбор данных</h1>
+                <p>Автоматический сбор тендеров из открытых источников</p>
+            </div>
+            
+            <div class="collection-panel">
+                <div class="collection-controls">
+                    <div class="input-group">
+                        <label>Источник данных:</label>
+                        <select id="collection-source">
+                            <option value="synthetic">Синтетические данные (тест)</option>
+                            <option value="goszakupki_kz">Госзакупки Казахстана</option>
+                            <option value="zakupki_kz">Zakupki.kz</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="collectTenders()">
+                        <span>📥</span>
+                        <span>Собрать тендеры</span>
+                    </button>
+                </div>
+                <div id="collection-results" class="collection-list"></div>
+            </div>
+        </section>
+        
+        <!-- Метрики -->
+        <section id="metrics" class="content-section">
+            <div class="section-header">
+                <h1>📈 Метрики и аналитика</h1>
+                <p>Статистика производительности системы</p>
+            </div>
+            
+            <div class="metrics-panel">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">📊</div>
+                        <div class="metric-content">
+                            <h3>Точность извлечения</h3>
+                            <div class="metric-value" id="metric-accuracy">-</div>
+                            <p>Цель: ≥90%</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚠️</div>
+                        <div class="metric-content">
+                            <h3>Подтверждение рисков</h3>
+                            <div class="metric-value" id="metric-risks">-</div>
+                            <p>Цель: ≥80%</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚡</div>
+                        <div class="metric-content">
+                            <h3>Время обработки</h3>
+                            <div class="metric-value" id="metric-time">-</div>
+                            <p>Среднее время</p>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">✅</div>
+                        <div class="metric-content">
+                            <h3>Completion Rate</h3>
+                            <div class="metric-value" id="metric-completion">-</div>
+                            <p>Успешных запросов</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button class="btn btn-secondary" onclick="loadMetrics()">
+                        <span>🔄</span>
+                        <span>Обновить метрики</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="scrollToSection('analysis')">
+                        <span>📊</span>
+                        <span>Начать анализ</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Для новичков -->
+        <section id="beginner" class="content-section">
+            <div class="section-header">
+                <h1>🎓 Поддержка новичков</h1>
+                <p>Пошаговые инструкции и обучающие материалы</p>
+            </div>
+            
+            <div class="beginner-panel">
+                <div class="beginner-grid">
+                    <div class="beginner-card">
+                        <h3>📊 Ваш рейтинг</h3>
+                        <div id="beginner-rating" class="rating-display"></div>
+                    </div>
+                    
+                    <div class="beginner-card">
+                        <h3>📚 Пошаговая инструкция</h3>
+                        <div class="step-selector">
+                            <select id="guide-step" onchange="loadGuide()">
+                                <option value="1">Шаг 1: Анализ тендера</option>
+                                <option value="2">Шаг 2: Проверка требований</option>
+                                <option value="3">Шаг 3: Подготовка документов</option>
+                                <option value="4">Шаг 4: Формирование заявки</option>
+                                <option value="5">Шаг 5: Расчёт цены</option>
+                                <option value="6">Шаг 6: Проверка заявки</option>
+                                <option value="7">Шаг 7: Подача заявки</option>
+                                <option value="8">Шаг 8: Ожидание результатов</option>
+                                <option value="9">Шаг 9: Подписание договора</option>
+                                <option value="10">Шаг 10: Исполнение обязательств</option>
+                            </select>
+                        </div>
+                        <div id="guide-content" class="guide-content"></div>
+                    </div>
+                    
+                    <div class="beginner-card">
+                        <h3>🤝 Поиск партнёрств</h3>
+                        <div class="ai-assist-banner small">
+                            <div class="banner-content">
+                                <div>
+                                    <strong>🤖 Улучшить описание AI</strong>
+                                </div>
+                                <button class="btn btn-ai small" onclick="improveCompanyDescriptionWithAI()">
+                                    <span>🤖</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <textarea id="beginner-company" rows="3" placeholder="Опишите вашу компанию..."></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="findPartnerships()">
+                            <span>🔍</span>
+                            <span>Найти партнёров</span>
+                        </button>
+                        <div id="partnerships-result" class="result-box" style="display: none;"></div>
+                    </div>
+                    
+                    <div class="beginner-card">
+                        <h3>📝 Генерация документов</h3>
+                        <div class="input-group">
+                            <label>Тип документа:</label>
+                            <select id="document-type">
+                                <option value="application">Заявка на участие</option>
+                                <option value="contract">Проект договора</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="generateDocuments()">
+                            <span>📄</span>
+                            <span>Сгенерировать</span>
+                        </button>
+                        <div id="generated-document" class="result-box" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Стили -->
+<style>
+/* Основной контейнер */
+.procure-container {
+    display: flex;
+    min-height: calc(100vh - 80px);
+    background: #F9FAFB;
+}
+
+/* Боковая панель */
+.procure-sidebar {
+    width: 280px;
+    background: #FFFFFF;
+    border-right: 1px solid #E5E7EB;
+    position: sticky;
+    top: 80px;
+    height: calc(100vh - 80px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+}
+
+.sidebar-header {
+    padding: 2rem 1.5rem;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.sidebar-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #8B1E2D;
+    margin: 0 0 0.5rem 0;
+}
+
+.sidebar-subtitle {
+    font-size: 0.875rem;
+    color: #6B7280;
+    margin: 0 0 1rem 0;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #059669;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: #10B981;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 1rem 0;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.5rem;
+    color: #6B7280;
+    text-decoration: none;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.nav-item:hover {
+    background: #F9FAFB;
+    color: #8B1E2D;
+}
+
+.nav-item.active {
+    background: #FEF2F2;
+    color: #8B1E2D;
+    border-left-color: #8B1E2D;
+    font-weight: 600;
+}
+
+.nav-icon {
+    font-size: 1.25rem;
+    width: 24px;
+    text-align: center;
+}
+
+.sidebar-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #E5E7EB;
+    background: #F9FAFB;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #8B1E2D;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #6B7280;
+    margin-top: 0.25rem;
+}
+
+/* Основной контент */
+.procure-main {
+    flex: 1;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.content-section {
+    margin-bottom: 4rem;
+    scroll-margin-top: 100px;
+}
+
+.section-header {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+}
+
+.section-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0 0 0.5rem 0;
+    flex: 1;
+    min-width: 200px;
+}
+
+.section-header > div {
+    flex: 1;
+    min-width: 200px;
+}
+
+.section-header p {
+    font-size: 1rem;
+    color: #6B7280;
+    margin: 0;
+}
+
+/* Быстрые действия */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.action-card {
+    background: #FFFFFF;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 2px solid #E5E7EB;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.action-card:hover {
+    border-color: #8B1E2D;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(139, 30, 45, 0.1);
+}
+
+.action-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.action-card h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 0.5rem 0;
+}
+
+.action-card p {
+    font-size: 0.875rem;
+    color: #6B7280;
+    margin: 0;
+}
+
+/* Панель анализа */
+.analysis-panel {
+    background: #FFFFFF;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.functionality-selector {
+    background: #F9FAFB;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.functionality-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #EFF6FF;
+    border-left: 3px solid #3B82F6;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: #1E40AF;
+}
+
+.functionality-option {
+    position: relative;
+}
+
+.option-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: #8B1E2D;
+    color: #FFFFFF;
+    padding: 0.125rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.625rem;
+    font-weight: 600;
+}
+
+.functionality-selector h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 1rem 0;
+}
+
+.functionality-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.functionality-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #FFFFFF;
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.functionality-option:hover {
+    border-color: #8B1E2D;
+    background: #FEF2F2;
+}
+
+.functionality-option input[type="checkbox"]:checked + span {
+    color: #8B1E2D;
+    font-weight: 600;
+}
+
+.functionality-option input[type="checkbox"]:checked ~ .functionality-option {
+    border-color: #8B1E2D;
+    background: #FEF2F2;
+}
+
+.ai-assist-banner {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    border-left: 4px solid #F59E0B;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.ai-assist-banner.small {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.banner-content strong {
+    color: #92400E;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.banner-content p {
+    color: #78350F;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.input-group textarea,
+.input-group select {
+    width: 100%;
+    padding: 0.875rem;
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    transition: all 0.2s;
+    background: #FFFFFF;
+}
+
+.input-group textarea:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: #8B1E2D;
+    box-shadow: 0 0 0 3px rgba(139, 30, 45, 0.1);
+}
+
+.input-options {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #F9FAFB;
+    border-radius: 8px;
+}
+
+.input-options label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.75rem;
+}
+
+.radio-group {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.radio-group label:hover {
+    background: #F3F4F6;
+}
+
+.radio-group label input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: #8B1E2D;
+}
+
+.radio-group label input[type="radio"]:checked {
+    accent-color: #8B1E2D;
+}
+
+.radio-group label.radio-selected {
+    background: #FEF2F2;
+    border: 2px solid #8B1E2D;
+    font-weight: 600;
+    color: #8B1E2D;
+}
+
+.radio-group label:has(input[type="radio"]:checked) {
+    background: #FEF2F2;
+    border: 2px solid #8B1E2D;
+    font-weight: 600;
+    color: #8B1E2D;
+}
+
+/* Стили для полей источника */
+.source-field {
+    padding: 1rem;
+    background: #F9FAFB;
+    border-radius: 8px;
+    border: 2px solid #E5E7EB;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.source-field label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.75rem;
+}
+
+.file-upload-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.file-upload-wrapper button {
+    white-space: nowrap;
+}
+
+/* Кнопки */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: #8B1E2D;
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(139, 30, 45, 0.3);
+}
+
+.btn-primary:hover {
+    background: #7A1A28;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(139, 30, 45, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-secondary {
+    background: #F3F4F6;
+    color: #374151;
+    border: 2px solid #E5E7EB;
+}
+
+.btn-secondary:hover {
+    background: #E5E7EB;
+}
+
+.btn-ai {
+    background: #F59E0B;
+    color: #FFFFFF;
+    white-space: nowrap;
+}
+
+.btn-ai.small {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.btn-ai:hover {
+    background: #D97706;
+}
+
+/* Результаты */
+.results-panel {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #E5E7EB;
+}
+
+.result-section {
+    background: #F9FAFB;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    border-left: 4px solid #8B1E2D;
+}
+
+.result-section h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #8B1E2D;
+    margin: 0 0 0.75rem 0;
+}
+
+.result-box {
+    background: #FFFFFF;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid #E5E7EB;
+    margin-top: 0.75rem;
+    line-height: 1.6;
+}
+
+/* Метрики */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 1200px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.metric-card {
+    background: #FFFFFF;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s;
+}
+
+.metric-card:hover {
+    border-color: #8B1E2D;
+    box-shadow: 0 4px 12px rgba(139, 30, 45, 0.1);
+}
+
+.metric-icon {
+    font-size: 1.75rem;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FEF2F2;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.metric-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.metric-content h3 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6B7280;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+}
+
+.metric-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #8B1E2D;
+    margin: 0 0 0.125rem 0;
+    line-height: 1.2;
+}
+
+.metric-content p {
+    font-size: 0.65rem;
+    color: #9CA3AF;
+    margin: 0;
+    line-height: 1.2;
+}
+
+/* Для новичков */
+.beginner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.beginner-card {
+    background: #FFFFFF;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+}
+
+.beginner-card h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 1rem 0;
+}
+
+.rating-display {
+    margin-top: 1rem;
+}
+
+.step-selector {
+    margin-bottom: 1rem;
+}
+
+.step-selector select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+}
+
+.guide-content {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #F9FAFB;
+    border-radius: 8px;
+    min-height: 200px;
+}
+
+/* Онбординг */
+.onboarding-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.onboarding-modal {
+    background: #FFFFFF;
+    border-radius: 16px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.onboarding-header {
+    padding: 2rem;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.onboarding-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #8B1E2D;
+}
+
+.onboarding-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #6B7280;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.onboarding-close:hover {
+    background: #F3F4F6;
+    color: #1F2937;
+}
+
+.onboarding-content {
+    padding: 2rem;
+}
+
+.onboarding-step {
+    display: none;
+    text-align: center;
+}
+
+.onboarding-step.active {
+    display: block;
+}
+
+.onboarding-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.onboarding-step h3 {
+    font-size: 1.5rem;
+    color: #1F2937;
+    margin: 0 0 1rem 0;
+}
+
+.onboarding-step p {
+    color: #6B7280;
+    line-height: 1.6;
+    margin: 0.75rem 0;
+}
+
+.onboarding-step ol,
+.onboarding-step ul {
+    text-align: left;
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.onboarding-step li {
+    margin: 0.5rem 0;
+    color: #374151;
+    line-height: 1.6;
+}
+
+.onboarding-footer {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F9FAFB;
+}
+
+.onboarding-progress {
+    font-size: 0.875rem;
+    color: #6B7280;
+    font-weight: 600;
+}
+
+.onboarding-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Подсказки */
+.tooltip {
+    position: absolute;
+    background: #1F2937;
+    color: #FFFFFF;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 250px;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1F2937;
+}
+
+.help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #E5E7EB;
+    color: #6B7280;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+    cursor: help;
+    transition: all 0.2s;
+}
+
+.help-icon:hover {
+    background: #8B1E2D;
+    color: #FFFFFF;
+}
+
+.btn-help {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #F3F4F6;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    color: #374151;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 1rem;
+}
+
+.btn-help:hover {
+    background: #E5E7EB;
+    color: #8B1E2D;
+}
+
+/* Пример использования */
+.example-box {
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+    border-left: 4px solid #3B82F6;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.example-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    color: #1E40AF;
+    font-size: 1rem;
+}
+
+.example-icon {
+    font-size: 1.5rem;
+}
+
+.example-content {
+    color: #1E3A8A;
+    line-height: 1.8;
+}
+
+.example-content p {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+/* Информационные карточки */
+.analysis-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.info-card {
+    background: #F0F9FF;
+    border-left: 3px solid #0284C7;
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.info-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.info-card strong {
+    display: block;
+    color: #0C4A6E;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.info-card p {
+    margin: 0;
+    color: #075985;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+.input-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: #FEF3C7;
+    border-left: 3px solid #F59E0B;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: #92400E;
+}
+
+.input-hint span:first-child {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.banner-hint {
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    color: #78350F;
+}
+
+.action-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: #10B981;
+    color: #FFFFFF;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.action-card {
+    position: relative;
+}
+
+.quick-example {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: #3B82F6;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    transition: all 0.2s;
+}
+
+.btn-link:hover {
+    color: #2563EB;
+}
+
+.action-buttons {
+    margin: 1.5rem 0;
+}
+
+.button-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: #F0FDF4;
+    border-left: 3px solid #10B981;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    color: #065F46;
+}
+
+.example-divider {
+    text-align: center;
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+.example-divider::before,
+.example-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 45%;
+    height: 1px;
+    background: #E5E7EB;
+}
+
+.example-divider::before {
+    left: 0;
+}
+
+.example-divider::after {
+    right: 0;
+}
+
+.example-divider span {
+    background: #F9FAFB;
+    padding: 0 1rem;
+    color: #6B7280;
+    font-size: 0.875rem;
+    position: relative;
+    z-index: 1;
+}
+
+.example-note {
+    text-align: center;
+    font-size: 0.8125rem;
+    color: #6B7280;
+    margin: 0.5rem 0 0 0;
+    font-style: italic;
+}
+
+/* Информационные баннеры */
+.info-banner {
+    background: #EFF6FF;
+    border-left: 4px solid #3B82F6;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.info-banner.warning {
+    background: #FEF3C7;
+    border-left-color: #F59E0B;
+}
+
+.info-banner.warning .info-icon {
+    color: #D97706;
+}
+
+.info-banner.warning strong {
+    color: #92400E;
+}
+
+.info-banner.warning p {
+    color: #78350F;
+}
+
+.info-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.info-banner strong {
+    display: block;
+    color: #1E40AF;
+    margin-bottom: 0.5rem;
+    font-size: 0.9375rem;
+}
+
+.info-banner p {
+    margin: 0;
+    color: #1E3A8A;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+/* Пустое состояние */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: #F9FAFB;
+    border: 2px dashed #D1D5DB;
+    border-radius: 12px;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    color: #374151;
+    margin: 0 0 0.5rem 0;
+}
+
+.empty-state p {
+    color: #6B7280;
+    margin: 0 0 1.5rem 0;
+}
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+    .procure-sidebar {
+        width: 240px;
+    }
+}
+
+@media (max-width: 768px) {
+    .procure-container {
+        flex-direction: column;
+    }
+    
+    .procure-sidebar {
+        width: 100%;
+        position: relative;
+        top: 0;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #E5E7EB;
+    }
+    
+    .sidebar-nav {
+        display: flex;
+        overflow-x: auto;
+        padding: 0.5rem;
+    }
+    
+    .nav-item {
+        flex-shrink: 0;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .nav-item.active {
+        border-left: none;
+        border-bottom-color: #8B1E2D;
+    }
+    
+    .procure-main {
+        padding: 1rem;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .functionality-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .beginner-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Спиннер */
+.spinner {
+    border: 3px solid #F3F4F6;
+    border-top: 3px solid #8B1E2D;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<script src="/static/js/ai_procure.js"></script>
+{% endblock %}

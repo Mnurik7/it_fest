@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HelpDesk{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% if username %}
+    <header class="header">
+        <div class="header-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='images/logo2.png') }}" alt="HelpDesk" class="logo-image">
+                <div class="logo-text">
+                    <h1>HelpDesk</h1>
+                    <p class="logo-subtitle">Hackathon ITFEST 2025</p>
+                </div>
+            </a>
+            <div class="user-menu">
+                <a href="{{ url_for('profile') }}" class="profile-link">
+                    <span class="profile-icon">👤</span>
+                    <span class="username">{{ username }}</span>
+                </a>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+            </div>
+        </div>
+    </header>
+    {% endif %}
+    
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer class="footer">
+        <div class="footer-container">
+            <p class="footer-copyright">&copy; 2025 HelpDesk. Помогаем. Поддерживаем. Создаём.</p>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Поддержка</a>
+                <a href="#" class="footer-link">Документация</a>
+                <a href="#" class="footer-link">API</a>
+            </div>
+        </div>
+    </footer>
+    
+    {% if username %}
+    <!-- AI Assistant Widget -->
+    <div id="aiAssistantWidget" class="ai-assistant-widget">
+        <div class="ai-assistant-toggle" onclick="toggleAIAssistant()">
+            <span class="ai-assistant-icon">🤖</span>
+            <span class="ai-assistant-badge" id="aiAssistantBadge">1</span>
+        </div>
+        <div class="ai-assistant-panel" id="aiAssistantPanel">
+            <div class="ai-assistant-header">
+                <div class="ai-assistant-title">
+                    <span class="ai-assistant-icon-large">🤖</span>
+                    <div>
+                        <h3>AI Ассистент</h3>
+                        <p class="ai-assistant-subtitle">Ваш путеводитель по HelpDesk</p>
+                    </div>
+                </div>
+                <button class="ai-assistant-close" onclick="toggleAIAssistant()">×</button>
+            </div>
+            <div class="ai-assistant-content" id="aiAssistantContent">
+                <div class="ai-assistant-loading">Загрузка...</div>
+            </div>
+            <div class="ai-assistant-input-container">
+                <input 
+                    type="text" 
+                    id="aiAssistantInput" 
+                    class="ai-assistant-input" 
+                    placeholder="Задайте вопрос..."
+                    onkeypress="handleAIAssistantKeyPress(event)"
+                />
+                <button class="ai-assistant-send" onclick="sendAIAssistantMessage()">
+                    <span>➤</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ai_assistant.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+    
+    <style>
+    /* AI Assistant Styles */
+    .ai-assistant-widget {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .ai-assistant-toggle {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(139, 30, 45, 0.3);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .ai-assistant-toggle:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(139, 30, 45, 0.4);
+    }
+    
+    .ai-assistant-icon {
+        font-size: 28px;
+    }
+    
+    .ai-assistant-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #EF4444;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        border: 2px solid white;
+    }
+    
+    .ai-assistant-panel {
+        position: absolute;
+        bottom: 80px;
+        right: 0;
+        width: 380px;
+        max-width: calc(100vw - 40px);
+        height: 600px;
+        max-height: calc(100vh - 100px);
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #E5E7EB;
+    }
+    
+    .ai-assistant-panel.active {
+        display: flex;
+        animation: slideUp 0.3s ease;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .ai-assistant-header {
+        padding: 20px;
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .ai-assistant-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .ai-assistant-icon-large {
+        font-size: 32px;
+    }
+    
+    .ai-assistant-title h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    
+    .ai-assistant-subtitle {
+        margin: 4px 0 0 0;
+        font-size: 12px;
+        opacity: 0.9;
+    }
+    
+    .ai-assistant-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 28px;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+    
+    .ai-assistant-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .ai-assistant-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #F9FAFB;
+    }
+    
+    .ai-assistant-message {
+        margin-bottom: 16px;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .ai-assistant-message.user {
+        text-align: right;
+    }
+    
+    .ai-assistant-message-bubble {
+        display: inline-block;
+        padding: 12px 16px;
+        border-radius: 12px;
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+    
+    .ai-assistant-message.user .ai-assistant-message-bubble {
+        background: #8B1E2D;
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .ai-assistant-message.assistant .ai-assistant-message-bubble {
+        background: white;
+        color: #1F2937;
+        border: 1px solid #E5E7EB;
+        border-bottom-left-radius: 4px;
+    }
+    
+    .ai-assistant-message.assistant .ai-assistant-message-bubble h4,
+    .ai-assistant-message.assistant .ai-assistant-message-bubble h5 {
+        margin-top: 0;
+        margin-bottom: 8px;
+        color: #8B1E2D;
+    }
+    
+    .ai-assistant-message.assistant .ai-assistant-message-bubble ul,
+    .ai-assistant-message.assistant .ai-assistant-message-bubble ol {
+        margin: 8px 0;
+        padding-left: 20px;
+    }
+    
+    .ai-assistant-message.assistant .ai-assistant-message-bubble code {
+        background: #F3F4F6;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+    }
+    
+    .ai-assistant-loading {
+        text-align: center;
+        padding: 20px;
+        color: #6B7280;
+    }
+    
+    .ai-assistant-typing {
+        display: flex;
+        gap: 4px;
+        padding: 12px 16px;
+    }
+    
+    .ai-assistant-typing span {
+        width: 8px;
+        height: 8px;
+        background: #8B1E2D;
+        border-radius: 50%;
+        animation: typing 1.4s infinite;
+    }
+    
+    .ai-assistant-typing span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .ai-assistant-typing span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.7;
+        }
+        30% {
+            transform: translateY(-10px);
+            opacity: 1;
+        }
+    }
+    
+    .ai-assistant-input-container {
+        padding: 16px;
+        background: white;
+        border-top: 1px solid #E5E7EB;
+        display: flex;
+        gap: 8px;
+    }
+    
+    .ai-assistant-input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 1px solid #D1D5DB;
+        border-radius: 24px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    
+    .ai-assistant-input:focus {
+        border-color: #8B1E2D;
+    }
+    
+    .ai-assistant-send {
+        width: 44px;
+        height: 44px;
+        background: #8B1E2D;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.2s;
+    }
+    
+    .ai-assistant-send:hover {
+        background: #A02D3F;
+        transform: scale(1.05);
+    }
+    
+    .ai-assistant-send:active {
+        transform: scale(0.95);
+    }
+    
+    .ai-assistant-quick-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+    }
+    
+    .ai-assistant-quick-action {
+        padding: 6px 12px;
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 16px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .ai-assistant-quick-action:hover {
+        background: #F3F4F6;
+        border-color: #8B1E2D;
+    }
+    
+    @media (max-width: 768px) {
+        .ai-assistant-panel {
+            width: calc(100vw - 20px);
+            right: 10px;
+            bottom: 90px;
+        }
+    }
+    </style>
+</body>
+</html>
+

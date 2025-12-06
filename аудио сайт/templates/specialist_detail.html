@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}Специалист: {{ specialist.username }} - AI Help Desk{% endblock %}
+
+{% block content %}
+<div class="specialist-detail-compact">
+    <div class="specialist-detail-header-compact">
+        <a href="/admin" class="btn btn-secondary btn-sm">← Назад</a>
+        <h1>Специалист: {{ specialist.username }}</h1>
+    </div>
+    
+    <div class="specialist-detail-content-compact">
+        <!-- Компактная информация о профиле -->
+        <div class="specialist-profile-compact">
+            <div class="specialist-avatar-wrapper-large">
+                {% if specialist.avatar_url %}
+                <img src="{{ specialist.avatar_url }}" alt="{{ specialist.username }}" class="specialist-avatar-large-img">
+                {% else %}
+                <div class="specialist-avatar-large-placeholder">🔧</div>
+                {% endif %}
+                <div class="specialist-status-indicator-large {% if is_online %}online{% else %}offline{% endif %}"></div>
+            </div>
+            <div class="specialist-info-compact-detail">
+                <h2>{{ specialist.username }}</h2>
+                <div class="profile-details-compact">
+                    <div class="profile-detail-compact">
+                        <span class="detail-label-compact">Email:</span>
+                        <span class="detail-value-compact">{{ specialist.email }}</span>
+                    </div>
+                    {% if specialist.department %}
+                    <div class="profile-detail-compact">
+                        <span class="detail-label-compact">Отдел:</span>
+                        <span class="detail-value-compact">{{ specialist.department }}</span>
+                    </div>
+                    {% endif %}
+                    {% if specialist.created_at %}
+                    <div class="profile-detail-compact">
+                        <span class="detail-label-compact">Регистрация:</span>
+                        <span class="detail-value-compact">{{ specialist.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="profile-detail-compact">
+                        <span class="detail-label-compact">Статус:</span>
+                        <span class="detail-value-compact">
+                            {% if is_online %}
+                                <span class="status-badge-compact online">🟢 Онлайн</span>
+                            {% else %}
+                                <span class="status-badge-compact offline">⚫ Офлайн</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Компактная статистика -->
+        <div class="specialist-stats-compact">
+            <h3 class="section-title-compact">📊 Статистика</h3>
+            <div class="stats-grid-compact">
+                <div class="stat-card-compact-detail">
+                    <div class="stat-icon-compact-detail">📋</div>
+                    <div class="stat-content-compact-detail">
+                        <div class="stat-value-compact-detail">{{ tickets_in_department }}</div>
+                        <div class="stat-label-compact-detail">Тикетов в отделе</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-compact-detail">
+                    <div class="stat-icon-compact-detail">✅</div>
+                    <div class="stat-content-compact-detail">
+                        <div class="stat-value-compact-detail">{{ resolved_tickets }}</div>
+                        <div class="stat-label-compact-detail">Решено</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-compact-detail">
+                    <div class="stat-icon-compact-detail">⚙️</div>
+                    <div class="stat-content-compact-detail">
+                        <div class="stat-value-compact-detail">{{ in_progress_tickets }}</div>
+                        <div class="stat-label-compact-detail">В работе</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card-compact-detail">
+                    <div class="stat-icon-compact-detail">🔵</div>
+                    <div class="stat-content-compact-detail">
+                        <div class="stat-value-compact-detail">{{ open_tickets }}</div>
+                        <div class="stat-label-compact-detail">Открытых</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Компактная история тикетов -->
+        {% if recent_tickets %}
+        <div class="specialist-tickets-compact">
+            <h3 class="section-title-compact">📋 Последние тикеты</h3>
+            <div class="tickets-list-compact">
+                {% for ticket in recent_tickets %}
+                <div class="ticket-item-compact">
+                    <div class="ticket-item-header-compact">
+                        <div class="ticket-item-id-compact">#{{ ticket.id }}</div>
+                        <div class="ticket-item-status-compact">
+                            {% if ticket.status == 'RESOLVED' %}
+                                <span class="status-badge-compact status-resolved">✅ Решён</span>
+                            {% elif ticket.status == 'IN_PROGRESS' %}
+                                <span class="status-badge-compact status-progress">⚙️ В работе</span>
+                            {% elif ticket.status == 'OPEN' %}
+                                <span class="status-badge-compact status-open">🔵 Открыт</span>
+                            {% else %}
+                                <span class="status-badge-compact status-closed">🔒 Закрыт</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="ticket-item-info-compact">
+                        <div class="ticket-item-meta-compact">
+                            <span>📁 {{ ticket.category or '-' }}</span>
+                            <span>⚡ {{ ticket.priority or 'MEDIUM' }}</span>
+                            <span>📅 {{ ticket.created_at.strftime('%d.%m.%Y') }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.specialist-detail-compact {
+    max-width: 100%;
+    padding: var(--spacing-lg);
+    height: calc(100vh - 80px);
+    overflow-y: auto;
+}
+
+.specialist-detail-header-compact {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.specialist-detail-header-compact h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.specialist-profile-compact {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.specialist-avatar-wrapper-large {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.specialist-avatar-large-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid transparent;
+    display: block;
+}
+
+.specialist-avatar-large-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    border: 4px solid transparent;
+}
+
+.specialist-status-indicator-large {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid var(--color-bg);
+    z-index: 10;
+    animation: pulse-status 2s ease-in-out infinite;
+}
+
+.specialist-status-indicator-large.online {
+    background-color: #10b981;
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px rgba(16, 185, 129, 0.3);
+}
+
+.specialist-status-indicator-large.offline {
+    background-color: #6b7280;
+    box-shadow: 0 0 0 2px var(--color-bg);
+    animation: none;
+}
+
+.specialist-info-compact-detail {
+    flex: 1;
+}
+
+.specialist-info-compact-detail h2 {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: 1.5rem;
+}
+
+.profile-details-compact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.profile-detail-compact {
+    display: flex;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+}
+
+.detail-label-compact {
+    font-weight: 600;
+    color: var(--color-text-light);
+    min-width: 100px;
+}
+
+.detail-value-compact {
+    color: var(--color-text);
+}
+
+.status-badge-compact {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge-compact.online {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge-compact.offline {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.specialist-stats-compact {
+    margin-bottom: var(--spacing-lg);
+}
+
+.section-title-compact {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.stats-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.stat-card-compact-detail {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: var(--transition);
+}
+
+.stat-card-compact-detail:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-icon-compact-detail {
+    font-size: 1.5rem;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.stat-content-compact-detail {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-value-compact-detail {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+    line-height: 1.2;
+    margin-bottom: 0.125rem;
+}
+
+.stat-label-compact-detail {
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.specialist-tickets-compact {
+    margin-top: var(--spacing-lg);
+}
+
+.tickets-list-compact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.ticket-item-compact {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    transition: var(--transition);
+}
+
+.ticket-item-compact:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.ticket-item-header-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.ticket-item-id-compact {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--color-text);
+}
+
+.ticket-item-status-compact {
+    flex-shrink: 0;
+}
+
+.ticket-item-info-compact {
+    font-size: 0.8125rem;
+    color: var(--color-text-light);
+}
+
+.ticket-item-meta-compact {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.status-badge-compact.status-resolved {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge-compact.status-progress {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge-compact.status-open {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge-compact.status-closed {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+@keyframes pulse-status {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+}
+
+@media (max-width: 768px) {
+    .specialist-detail-compact {
+        padding: var(--spacing-md);
+    }
+    
+    .specialist-profile-compact {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stats-grid-compact {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ticket-item-header-compact {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+    
+    .ticket-item-meta-compact {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+}
+</style>
+{% endblock %}

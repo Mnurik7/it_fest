@@ -1,0 +1,26 @@
+[
+  {
+    "deadline_id": "DL-20251128021246",
+    "task_id": "Анализ рынка",
+    "deadline": "2025-11-29",
+    "assignee": "Асыл",
+    "project_id": "PROJ-20251128014105",
+    "priority": "medium",
+    "status": "active",
+    "created_at": "2025-11-28T02:12:46.595631",
+    "reminders_sent": [],
+    "completed_at": null
+  },
+  {
+    "deadline_id": "DL-20251128021317",
+    "task_id": "Анализ промпа",
+    "deadline": "2025-11-29",
+    "assignee": "Ерағали",
+    "project_id": "PROJ-20251128014105",
+    "priority": "medium",
+    "status": "active",
+    "created_at": "2025-11-28T02:13:17.163833",
+    "reminders_sent": [],
+    "completed_at": null
+  }
+]

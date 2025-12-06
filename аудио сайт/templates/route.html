@@ -1,0 +1,894 @@
+{% extends "base.html" %}
+
+{% block title %}Маршрут специалиста - AI Help Desk{% endblock %}
+
+{% block extra_head %}
+<style>
+.route-container {
+    max-width: 100%;
+    padding: var(--spacing-xl);
+    min-height: calc(100vh - 80px);
+}
+
+.route-header {
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.route-header h1 {
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.route-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.info-card {
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.info-card h3 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: 1rem;
+    color: var(--color-text-light);
+}
+
+.info-card p {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-accepted {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-in-route {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-arrived {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-completed {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.map-container {
+    width: 100%;
+    height: 600px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-xl);
+    background: var(--color-bg-secondary);
+    position: relative;
+    overflow: hidden;
+}
+
+.map-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: var(--color-text-light);
+}
+
+.route-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .route-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .map-container {
+        height: 400px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="route-container">
+    <div class="route-header">
+        <h1>🗺️ Маршрут специалиста</h1>
+        <div>
+            <span class="status-badge status-{{ dispatch.status.lower().replace('_', '-') }}" id="statusBadge">
+                {% if dispatch.status == 'PENDING' %}
+                    ⏳ Ожидает принятия
+                {% elif dispatch.status == 'ACCEPTED' %}
+                    ✓ Принято
+                {% elif dispatch.status == 'IN_ROUTE' %}
+                    🚗 В пути
+                {% elif dispatch.status == 'ARRIVED' %}
+                    ✅ Прибыл
+                {% elif dispatch.status == 'COMPLETED' %}
+                    ✅ Завершено
+                {% else %}
+                    {{ dispatch.status }}
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    
+    <div class="route-info">
+        <div class="info-card">
+            <h3>👤 Клиент</h3>
+            <p>{{ dispatch.user.username if dispatch.user else 'Неизвестно' }}</p>
+        </div>
+        
+        <div class="info-card">
+            <h3>👨‍🔧 Специалист</h3>
+            <p>{{ dispatch.specialist.username if dispatch.specialist else 'Неизвестно' }}</p>
+        </div>
+        
+        <div class="info-card">
+            <h3>📍 Адрес</h3>
+            <p>{{ dispatch.client_address or 'Не указан' }}</p>
+        </div>
+        
+        {% if user.role == 'specialist' and user.id == dispatch.specialist_id %}
+        <div class="info-card">
+            <h3>📍 Мое местоположение</h3>
+            <p id="specialistLocation">Определение...</p>
+            <button class="btn btn-primary btn-sm" onclick="updateSpecialistLocation()" style="margin-top: var(--spacing-sm);">
+                📍 Обновить местоположение
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="map-container" id="mapContainer" style="width: 100%; height: 600px; position: relative;">
+        <div class="map-placeholder" id="mapPlaceholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; color: var(--color-text-light);">
+            <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">🗺️</div>
+            <div>Загрузка карты...</div>
+        </div>
+    </div>
+    
+    {% if user.role == 'specialist' and user.id == dispatch.specialist_id %}
+    <div class="route-actions">
+        {% if dispatch.status == 'PENDING' %}
+        <button class="btn btn-success" onclick="acceptDispatch()" id="acceptBtn">
+            ✓ Принять предложение
+        </button>
+        {% else %}
+        <button class="btn btn-success" onclick="markAsInRoute()" id="inRouteBtn" {% if dispatch.status != 'ACCEPTED' %}style="display: none;"{% endif %}>
+            🚗 Начать движение
+        </button>
+        <button class="btn btn-primary" onclick="markAsArrived()" id="arrivedBtn" {% if dispatch.status != 'IN_ROUTE' %}style="display: none;"{% endif %}>
+            ✅ Прибыл на место
+        </button>
+        <button class="btn btn-secondary" onclick="markAsCompleted()" id="completedBtn" {% if dispatch.status != 'ARRIVED' %}style="display: none;"{% endif %}>
+            ✅ Завершить работу
+        </button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const dispatchId = {{ dispatch.id }};
+const dispatchStatus = '{{ dispatch.status }}';
+const clientAddress = '{{ dispatch.client_address or "" }}';
+const clientLat = {{ dispatch.client_latitude or 'null' }};
+const clientLon = {{ dispatch.client_longitude or 'null' }};
+const specialistLat = {{ dispatch.specialist_latitude or 'null' }};
+const specialistLon = {{ dispatch.specialist_longitude or 'null' }};
+const userRole = '{{ user.role }}';
+const isSpecialist = {{ 'true' if user.role == 'specialist' and user.id == dispatch.specialist_id else 'false' }};
+const apiKey = '{{ config.get("TGIS_API_KEY", "") }}';
+
+let map = null;
+let routeMarker = null;
+let mapScriptLoaded = false;
+
+// Обработка ошибки загрузки скрипта карты
+function handleMapScriptError() {
+    console.error('Failed to load 2GIS map script');
+    const mapContainer = document.getElementById('mapContainer');
+    if (mapContainer) {
+        const addressText = clientAddress ? `Адрес: ${clientAddress}` : 'Адрес не указан';
+        const coordsText = (clientLat && clientLon) ? `
+            <div style="font-size: 0.875rem; color: var(--color-text-light); margin-top: var(--spacing-sm);">
+                Координаты: ${clientLat}, ${clientLon}
+            </div>
+            <a href="https://2gis.com/search/${encodeURIComponent(clientAddress || clientLat + ',' + clientLon)}" 
+               target="_blank" 
+               style="display: inline-block; margin-top: var(--spacing-md); padding: var(--spacing-sm) var(--spacing-md); background: var(--color-primary); color: white; text-decoration: none; border-radius: var(--radius-sm);">
+                Открыть в 2GIS
+            </a>
+        ` : '';
+        
+        mapContainer.innerHTML = `
+            <div class="map-placeholder">
+                <div style="font-size: 3rem; margin-bottom: var(--spacing-md);">🗺️</div>
+                <div style="margin-bottom: var(--spacing-sm);">Карта недоступна</div>
+                <div style="font-size: 0.875rem; color: var(--color-text-light);">
+                    ${addressText}
+                </div>
+                ${coordsText}
+            </div>
+        `;
+    }
+}
+
+// Загружаем скрипт 2GIS с обработкой ошибок
+(function() {
+    // Проверяем, не загружен ли уже скрипт
+    const existingScript = document.querySelector('script[src*="maps.api.2gis"]');
+    if (existingScript) {
+        // Скрипт уже загружается или загружен
+        if (typeof DG !== 'undefined') {
+            setTimeout(initializeMap, 100);
+        } else {
+            // Ждем загрузки
+            const checkInterval = setInterval(function() {
+                if (typeof DG !== 'undefined') {
+                    clearInterval(checkInterval);
+                    initializeMap();
+                }
+            }, 100);
+            setTimeout(function() {
+                clearInterval(checkInterval);
+                if (typeof DG === 'undefined') {
+                    handleMapScriptError();
+                }
+            }, 5000);
+        }
+        return;
+    }
+    
+    const script = document.createElement('script');
+    // Используем правильный URL для 2GIS API
+    script.src = 'https://maps.api.2gis.ru/2.0/loader.js?pkg=full';
+    script.async = true;
+    script.onerror = function() {
+        console.error('Failed to load 2GIS script');
+        handleMapScriptError();
+    };
+    script.onload = function() {
+        // Даем время на инициализацию DG
+        setTimeout(function() {
+            if (typeof DG !== 'undefined') {
+                initializeMap();
+            } else {
+                // Ждем еще немного
+                const checkInterval = setInterval(function() {
+                    if (typeof DG !== 'undefined') {
+                        clearInterval(checkInterval);
+                        initializeMap();
+                    }
+                }, 100);
+                setTimeout(function() {
+                    clearInterval(checkInterval);
+                    if (typeof DG === 'undefined') {
+                        handleMapScriptError();
+                    }
+                }, 3000);
+            }
+        }, 200);
+    };
+    document.head.appendChild(script);
+})();
+
+// Инициализация карты 2GIS
+function initializeMap() {
+    // Проверяем, загружен ли DG
+    if (typeof DG === 'undefined') {
+        console.warn('DG is not defined, waiting...');
+        // Ждем немного и проверяем снова
+        const checkInterval = setInterval(function() {
+            if (typeof DG !== 'undefined') {
+                clearInterval(checkInterval);
+                initMap();
+            }
+        }, 100);
+        
+        // Если через 5 секунд DG все еще не загрузился, показываем ошибку
+        setTimeout(function() {
+            if (typeof DG === 'undefined') {
+                clearInterval(checkInterval);
+                console.error('2GIS API (DG) failed to load after 5 seconds');
+                handleMapScriptError();
+            }
+        }, 5000);
+    } else {
+        initMap();
+    }
+}
+
+function initMap() {
+    try {
+        // Проверяем наличие DG
+        if (typeof DG === 'undefined') {
+            console.error('2GIS API (DG) is not loaded');
+            handleMapScriptError();
+            return;
+        }
+        
+        console.log('Initializing 2GIS map...');
+        
+        // Инициализируем карту через промис DG (правильный способ для 2GIS API 2.0)
+        if (typeof DG.then === 'function') {
+            DG.then(function() {
+                console.log('DG.then resolved, creating map...');
+                createMap();
+            }).catch(function(error) {
+                console.error('Error in DG.then:', error);
+                // Пробуем создать карту без промиса (на случай если API уже загружен)
+                setTimeout(function() {
+                    try {
+                        createMap();
+                    } catch (e) {
+                        console.error('Error creating map:', e);
+                        handleMapScriptError();
+                    }
+                }, 100);
+            });
+        } else {
+            // Если DG уже загружен, создаем карту сразу
+            console.log('DG is ready, creating map...');
+            createMap();
+        }
+    } catch (error) {
+        console.error('Error in initMap:', error);
+        handleMapScriptError();
+    }
+}
+
+function createMap() {
+    try {
+        console.log('Creating map...');
+        
+        // Проверяем наличие контейнера
+        const mapContainer = document.getElementById('mapContainer');
+        if (!mapContainer) {
+            console.error('Map container not found');
+            handleMapScriptError();
+            return;
+        }
+        
+        // Скрываем placeholder
+        const placeholder = document.getElementById('mapPlaceholder');
+        if (placeholder) {
+            placeholder.style.display = 'none';
+        }
+        
+        mapScriptLoaded = true;
+        
+        // Определяем центр карты
+        let centerLat = 51.1694; // Алматы по умолчанию
+        let centerLon = 71.4491;
+        
+        if (clientLat && clientLon && clientLat !== 'null' && clientLon !== 'null') {
+            centerLat = parseFloat(clientLat);
+            centerLon = parseFloat(clientLon);
+            console.log('Using client coordinates:', centerLat, centerLon);
+        } else if (specialistLat && specialistLon && specialistLat !== 'null' && specialistLon !== 'null') {
+            centerLat = parseFloat(specialistLat);
+            centerLon = parseFloat(specialistLon);
+            console.log('Using specialist coordinates:', centerLat, centerLon);
+        } else {
+            console.log('Using default coordinates (Almaty):', centerLat, centerLon);
+        }
+        
+        // Создаем карту
+        if (typeof DG.map !== 'function') {
+            console.error('DG.map is not a function');
+            handleMapScriptError();
+            return;
+        }
+        
+        map = DG.map('mapContainer', {
+            center: [centerLat, centerLon],
+            zoom: 13
+        });
+        
+        console.log('Map created successfully');
+        
+        // Добавляем маркер адреса клиента
+        if (clientLat && clientLon && clientLat !== 'null' && clientLon !== 'null') {
+            try {
+                const clientMarker = DG.marker([parseFloat(clientLat), parseFloat(clientLon)]);
+                clientMarker.addTo(map);
+                clientMarker.bindPopup('📍 Адрес клиента: ' + (clientAddress || 'Не указан'));
+                console.log('Client marker added');
+            } catch (e) {
+                console.error('Error adding client marker:', e);
+            }
+        }
+        
+        // Добавляем маркер специалиста
+        if (specialistLat && specialistLon && specialistLat !== 'null' && specialistLon !== 'null') {
+            try {
+                const specialistMarker = DG.marker([parseFloat(specialistLat), parseFloat(specialistLon)]);
+                specialistMarker.addTo(map);
+                specialistMarker.bindPopup('👨‍🔧 Специалист');
+                console.log('Specialist marker added');
+            } catch (e) {
+                console.error('Error adding specialist marker:', e);
+            }
+        }
+        
+        // Если есть оба маркера, подгоняем карту под них (временно, потом маршрут подгонит)
+        if ((clientLat && clientLon && clientLat !== 'null' && clientLon !== 'null') &&
+            (specialistLat && specialistLon && specialistLat !== 'null' && specialistLon !== 'null')) {
+            try {
+                const bounds = DG.latLngBounds(
+                    [parseFloat(clientLat), parseFloat(clientLon)],
+                    [parseFloat(specialistLat), parseFloat(specialistLon)]
+                );
+                map.fitBounds(bounds, { padding: [50, 50] });
+                console.log('Map bounds adjusted to markers');
+            } catch (e) {
+                console.error('Error adjusting map bounds:', e);
+            }
+        }
+        
+        // Загружаем и строим маршрут автоматически
+        setTimeout(function() {
+            loadRoute();
+        }, 500); // Даем время карте полностью загрузиться
+        
+        // Добавляем обработчик клика на карту для выбора местоположения
+        if (isSpecialist) {
+            map.on('click', function(e) {
+                if (window.selectingLocationOnMap) {
+                    selectLocationFromMap(e.latlng.lat, e.latlng.lng);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error creating map:', error);
+        handleMapScriptError();
+    }
+}
+
+// Загрузка маршрута
+async function loadRoute() {
+    if (!mapScriptLoaded || !map) {
+        console.log('Map not ready, retrying in 1 second...');
+        setTimeout(loadRoute, 1000);
+        return;
+    }
+    
+    // Проверяем наличие координат для построения маршрута
+    if (!clientLat || !clientLon || clientLat === 'null' || clientLon === 'null' ||
+        !specialistLat || !specialistLon || specialistLat === 'null' || specialistLon === 'null') {
+        console.log('Coordinates missing, cannot build route');
+        return;
+    }
+    
+    try {
+        console.log('Loading route from server...');
+        const response = await fetch(`/api/dispatches/${dispatchId}/route`, {
+            credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.route) {
+                console.log('Route data received from server');
+                // Отображаем маршрут на карте
+                displayRoute(data.route);
+            } else {
+                // Если сервер не вернул маршрут, строим его на клиенте
+                console.log('No route from server, building route on client...');
+                buildRouteOnClient();
+            }
+        } else {
+            // Если запрос не удался, строим маршрут на клиенте
+            console.log('Server request failed, building route on client...');
+            buildRouteOnClient();
+        }
+    } catch (error) {
+        console.error('Error loading route:', error);
+        // Пробуем построить маршрут на клиенте
+        buildRouteOnClient();
+    }
+}
+
+// Построение маршрута на клиенте используя 2GIS API
+async function buildRouteOnClient() {
+    if (!map || !apiKey) {
+        console.log('Cannot build route: map or API key missing');
+        return;
+    }
+    
+    if (!clientLat || !clientLon || clientLat === 'null' || clientLon === 'null' ||
+        !specialistLat || !specialistLon || specialistLat === 'null' || specialistLon === 'null') {
+        console.log('Cannot build route: coordinates missing');
+        return;
+    }
+    
+    try {
+        console.log('Building route using 2GIS API...');
+        const url = 'https://catalog.api.2gis.com/routing/7.0.0/global';
+        const params = new URLSearchParams({
+            key: apiKey,
+            point1: `${specialistLon},${specialistLat}`,
+            point2: `${clientLon},${clientLat}`
+        });
+        
+        const response = await fetch(`${url}?${params.toString()}`);
+        
+        if (response.ok) {
+            const routeData = await response.json();
+            console.log('Route built successfully');
+            displayRoute(routeData);
+        } else {
+            console.error('Failed to build route:', response.status);
+            // Если не удалось построить маршрут через API, рисуем прямую линию
+            drawDirectRoute();
+        }
+    } catch (error) {
+        console.error('Error building route:', error);
+        // Если не удалось построить маршрут через API, рисуем прямую линию
+        drawDirectRoute();
+    }
+}
+
+// Рисуем прямую линию между точками если API недоступен
+function drawDirectRoute() {
+    if (!map) return;
+    
+    try {
+        const clientCoords = [parseFloat(clientLat), parseFloat(clientLon)];
+        const specialistCoords = [parseFloat(specialistLat), parseFloat(specialistLon)];
+        
+        const routeLine = DG.polyline([specialistCoords, clientCoords], {
+            color: '#3b82f6',
+            weight: 4,
+            opacity: 0.6,
+            dashArray: '10, 10'
+        });
+        routeLine.addTo(map);
+        console.log('Direct route line drawn');
+    } catch (error) {
+        console.error('Error drawing direct route:', error);
+    }
+}
+
+// Отображение маршрута на карте
+function displayRoute(routeData) {
+    if (!map || !routeData) {
+        console.log('Cannot display route: map or routeData missing');
+        return;
+    }
+    
+    try {
+        console.log('Displaying route:', routeData);
+        
+        let coordinates = null;
+        let routeInfo = null;
+        
+        // Проверяем различные форматы ответа от 2GIS API
+        if (routeData.result && routeData.result.routes && routeData.result.routes.length > 0) {
+            const route = routeData.result.routes[0];
+            routeInfo = route;
+            
+            // Если есть геометрия маршрута
+            if (route.geometry && route.geometry.coordinates) {
+                coordinates = route.geometry.coordinates.map(function(coord) {
+                    // 2GIS возвращает координаты в формате [lon, lat], а DG использует [lat, lon]
+                    return [coord[1], coord[0]];
+                });
+            }
+        } else if (routeData.routes && routeData.routes.length > 0) {
+            // Альтернативный формат ответа
+            const route = routeData.routes[0];
+            routeInfo = route;
+            
+            if (route.geometry && route.geometry.coordinates) {
+                coordinates = route.geometry.coordinates.map(function(coord) {
+                    return [coord[1], coord[0]];
+                });
+            }
+        } else if (routeData.result && routeData.result.items && routeData.result.items.length > 0) {
+            // Еще один возможный формат
+            const item = routeData.result.items[0];
+            if (item.geometry && item.geometry.coordinates) {
+                coordinates = item.geometry.coordinates.map(function(coord) {
+                    return [coord[1], coord[0]];
+                });
+            }
+        }
+        
+        // Если нашли координаты маршрута, отображаем его
+        if (coordinates && coordinates.length > 0) {
+            // Удаляем предыдущий маршрут если есть
+            if (routeMarker) {
+                map.removeLayer(routeMarker);
+            }
+            
+            // Создаем полилинию маршрута
+            routeMarker = DG.polyline(coordinates, {
+                color: '#3b82f6',
+                weight: 5,
+                opacity: 0.8
+            });
+            routeMarker.addTo(map);
+            
+            console.log('Route line added to map with', coordinates.length, 'points');
+            
+            // Подгоняем карту под маршрут
+            try {
+                const bounds = DG.latLngBounds(coordinates);
+                map.fitBounds(bounds, { padding: [80, 80] });
+                console.log('Map bounds adjusted to route');
+            } catch (e) {
+                console.error('Error adjusting map bounds:', e);
+            }
+            
+            // Показываем информацию о маршруте если есть
+            if (routeInfo) {
+                let routeText = 'Маршрут построен';
+                if (routeInfo.distance) {
+                    const distance = routeInfo.distance.value || routeInfo.distance;
+                    const distanceKm = (distance / 1000).toFixed(1);
+                    routeText += ` (${distanceKm} км)`;
+                }
+                if (routeInfo.duration) {
+                    const duration = routeInfo.duration.value || routeInfo.duration;
+                    const durationMin = Math.round(duration / 60);
+                    routeText += ` - ${durationMin} мин`;
+                }
+                console.log('Route info:', routeText);
+            }
+        } else {
+            console.log('No coordinates found in route data, drawing direct line');
+            // Если не удалось получить координаты маршрута, рисуем прямую линию
+            drawDirectRoute();
+        }
+    } catch (error) {
+        console.error('Error displaying route:', error);
+        // В случае ошибки рисуем прямую линию
+        drawDirectRoute();
+    }
+}
+
+// Обновление местоположения специалиста
+async function updateSpecialistLocation() {
+    if (!navigator.geolocation) {
+        alert('Геолокация не поддерживается вашим браузером');
+        return;
+    }
+    
+    // Показываем сообщение о загрузке
+    const locationElement = document.getElementById('specialistLocation');
+    if (locationElement) {
+        locationElement.textContent = 'Получение местоположения...';
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            try {
+                const response = await fetch(`/api/dispatches/${dispatchId}/location`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        latitude: lat,
+                        longitude: lon
+                    })
+                });
+                
+                if (response.ok) {
+                    if (locationElement) {
+                        locationElement.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                    }
+                    alert('Местоположение обновлено');
+                    location.reload();
+                } else {
+                    if (locationElement) {
+                        locationElement.textContent = 'Ошибка обновления';
+                    }
+                    alert('Ошибка обновления местоположения');
+                }
+            } catch (error) {
+                console.error('Error updating location:', error);
+                if (locationElement) {
+                    locationElement.textContent = 'Ошибка обновления';
+                }
+                alert('Ошибка обновления местоположения');
+            }
+        },
+        (error) => {
+            let errorMessage = 'Ошибка получения местоположения';
+            
+            // Обработка различных типов ошибок
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = 'Доступ к геолокации запрещен. Разрешите доступ в настройках браузера.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = 'Информация о местоположении недоступна.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = 'Превышено время ожидания получения местоположения.';
+                    break;
+                default:
+                    if (error.message.includes('secure origins') || error.message.includes('Only secure origins')) {
+                        errorMessage = 'Геолокация доступна только на HTTPS или localhost. Используйте HTTPS или выберите местоположение на карте вручную.';
+                    } else {
+                        errorMessage = 'Ошибка получения местоположения: ' + error.message;
+                    }
+                    break;
+            }
+            
+            if (locationElement) {
+                locationElement.textContent = 'Не удалось получить';
+            }
+            
+            alert(errorMessage + '\n\nВы можете выбрать местоположение на карте вручную, кликнув на нужную точку.');
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+
+// Принятие предложения
+async function acceptDispatch() {
+    try {
+        const response = await fetch(`/api/dispatches/${dispatchId}/accept`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+            alert('Предложение принято! Теперь клиент может видеть маршрут.');
+            location.reload();
+        } else {
+            alert('Ошибка принятия предложения');
+        }
+    } catch (error) {
+        console.error('Error accepting dispatch:', error);
+        alert('Ошибка принятия предложения');
+    }
+}
+
+// Обновление статуса
+async function updateStatus(newStatus) {
+    try {
+        const response = await fetch(`/api/dispatches/${dispatchId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                status: newStatus
+            })
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Ошибка обновления статуса');
+        }
+    } catch (error) {
+        console.error('Error updating status:', error);
+        alert('Ошибка обновления статуса');
+    }
+}
+
+function markAsInRoute() {
+    if (confirm('Начать движение к клиенту?')) {
+        updateStatus('IN_ROUTE');
+    }
+}
+
+function markAsArrived() {
+    if (confirm('Вы прибыли на место?')) {
+        updateStatus('ARRIVED');
+    }
+}
+
+function markAsCompleted() {
+    if (confirm('Завершить работу?')) {
+        updateStatus('COMPLETED');
+    }
+}
+
+// Выбор местоположения на карте
+function selectLocationOnMap() {
+    if (!map) {
+        alert('Карта еще не загружена');
+        return;
+    }
+    
+    window.selectingLocationOnMap = true;
+    alert('Кликните на карте, чтобы выбрать ваше местоположение');
+    
+    // Изменяем курсор карты
+    map.getContainer().style.cursor = 'crosshair';
+}
+
+// Сохранение местоположения, выбранного на карте
+async function selectLocationFromMap(lat, lon) {
+    window.selectingLocationOnMap = false;
+    map.getContainer().style.cursor = '';
+    
+    try {
+        const response = await fetch(`/api/dispatches/${dispatchId}/location`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                latitude: lat,
+                longitude: lon
+            })
+        });
+        
+        if (response.ok) {
+            const locationElement = document.getElementById('specialistLocation');
+            if (locationElement) {
+                locationElement.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+            }
+            alert('Местоположение обновлено');
+            location.reload();
+        } else {
+            alert('Ошибка обновления местоположения');
+        }
+    } catch (error) {
+        console.error('Error updating location:', error);
+        alert('Ошибка обновления местоположения');
+    }
+}
+
+// Автообновление каждые 5 секунд (только если карта загружена)
+if (mapScriptLoaded) {
+    setInterval(() => {
+        if (map) {
+            loadRoute();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}
+

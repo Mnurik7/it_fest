@@ -1,0 +1,1909 @@
+{% extends "base.html" %}
+
+{% block title %}Чат #{{ chat.id }} - AI Help Desk{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Встроенный виджет голосового звонка */
+.voice-call-widget {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin: var(--spacing-md) 0;
+    transition: var(--transition);
+}
+
+.voice-call-widget.collapsed .voice-call-widget-content {
+    display: none;
+}
+
+.voice-call-widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.voice-call-widget-header:hover {
+    background: var(--color-bg-secondary);
+}
+
+.voice-call-widget-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 500;
+}
+
+.voice-call-icon {
+    font-size: 1.25rem;
+}
+
+.voice-call-widget-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.voice-call-timer {
+    font-family: 'Monaco', monospace;
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+}
+
+.voice-call-timer.hidden {
+    display: none;
+}
+
+.voice-call-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+}
+
+.voice-call-widget-content {
+    padding: var(--spacing-md);
+}
+
+.voice-call-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+.voice-call-controls.hidden {
+    display: none;
+}
+
+.voice-call-info {
+    text-align: center;
+    color: var(--color-text-light);
+    font-size: 0.875rem;
+}
+
+.voice-call-participants {
+    margin-bottom: var(--spacing-sm);
+}
+
+.voice-call-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.voice-call-permission {
+    text-align: center;
+    padding: var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+}
+
+.voice-call-permission.hidden {
+    display: none;
+}
+
+.voice-call-permission-status {
+    margin-top: var(--spacing-sm);
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+}
+
+.voice-call-widget.calling {
+    border-color: var(--color-success);
+    background: #f0fdf4;
+}
+
+.voice-call-widget.ringing {
+    border-color: var(--color-warning);
+    background: #fef3c7;
+}
+
+/* Чат инструменты */
+.chat-input-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: flex-end;
+}
+
+.chat-toolbar {
+    display: flex;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border: 1px solid var(--color-border);
+    border-bottom: none;
+}
+
+.toolbar-btn {
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: var(--transition);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toolbar-btn:hover {
+    background: var(--color-bg-tertiary);
+    transform: scale(1.1);
+}
+
+.toolbar-btn:active {
+    transform: scale(0.95);
+}
+
+.toolbar-btn.active {
+    background: var(--color-primary);
+    color: white;
+}
+
+/* Emoji picker */
+.emoji-picker {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    max-height: 250px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: var(--spacing-sm);
+    z-index: 1000;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: var(--spacing-xs);
+    backdrop-filter: blur(10px);
+}
+
+.emoji-picker.hidden {
+    display: none;
+}
+
+.emoji-item {
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: 1.2rem;
+    transition: var(--transition);
+}
+
+.emoji-item:hover {
+    background: var(--color-bg-secondary);
+    transform: scale(1.2);
+}
+
+/* File preview */
+.file-preview {
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.file-preview.hidden {
+    display: none;
+}
+
+.file-preview-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: white;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-xs);
+    box-shadow: var(--shadow-sm);
+}
+
+.file-preview-item:last-child {
+    margin-bottom: 0;
+}
+
+.file-preview-name {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex: 1;
+    overflow: hidden;
+}
+
+.file-preview-remove {
+    background: var(--color-error);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.file-preview-remove:hover {
+    background: #dc2626;
+}
+
+/* Voice recording */
+.voice-recording {
+    padding: var(--spacing-md);
+    background: var(--color-error);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-sm);
+    color: white;
+}
+
+.voice-recording.hidden {
+    display: none;
+}
+
+.voice-recording-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.recording-indicator {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+/* Message attachments */
+.message-attachment {
+    margin-bottom: var(--spacing-sm);
+}
+
+.message-attachment img {
+    border-radius: var(--radius-md);
+    max-width: 100%;
+    max-height: 400px;
+    height: auto;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+}
+
+.message-attachment img:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-lg);
+}
+
+.file-message {
+    margin-top: var(--spacing-xs);
+}
+
+.file-message a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--color-text);
+    transition: var(--transition);
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+
+.file-message a:hover {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.voice-message {
+    padding: var(--spacing-sm);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+.voice-message audio {
+    width: 100%;
+    max-width: 350px;
+    height: 40px;
+}
+
+.voice-message span {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: 0.875rem;
+}
+
+/* AI Assistant Panel */
+.ai-assistant-panel {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin: var(--spacing-md) 0;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+
+.ai-assistant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+}
+
+.ai-toggle-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.ai-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.ai-assistant-panel.collapsed .ai-assistant-content {
+    display: none;
+}
+
+.ai-assistant-panel.collapsed .ai-toggle-btn {
+    transform: rotate(180deg);
+}
+
+.ai-assistant-content {
+    padding: var(--spacing-md);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.empty-advice-message {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-text-light);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+}
+
+.ai-suggestion-card {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--color-primary);
+}
+
+.ai-suggestion-title {
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.ai-suggestion-text {
+    color: var(--color-text);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.ai-suggestion-actions {
+    margin-top: var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.ai-copy-btn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: var(--transition);
+}
+
+.ai-copy-btn:hover {
+    background: var(--color-primary-hover);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="chat-header-info">
+            <h1>💬 Чат #{{ chat.id }}</h1>
+            <div class="chat-status">
+                {% if chat.status == 'WAITING' %}
+                    <span class="status-badge status-waiting">⏳ Ожидает оператора</span>
+                {% elif chat.status == 'ACTIVE' %}
+                    <span class="status-badge status-active">✅ Активен</span>
+                    {% if chat.operator %}
+                        <span class="operator-name">Оператор: {{ chat.operator.username }}</span>
+                    {% endif %}
+                {% else %}
+                    <span class="status-badge status-closed">🔒 Закрыт</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="chat-header-actions">
+            {% if chat.status == 'ACTIVE' %}
+            <button id="closeChatBtn" class="btn btn-warning">🔒 Закрыть чат</button>
+            {% endif %}
+            <a href="/profile" class="btn btn-secondary">← Назад к профилю</a>
+        </div>
+    </div>
+    
+    <!-- AI-көмекшілер панелі (тек операторларға) -->
+    {% if user.role == 'operator' or user.role == 'admin' %}
+    <div class="ai-assistant-panel" id="aiAssistantPanel">
+        <div class="ai-assistant-header">
+            <span>🤖 AI-Помощник</span>
+            <button class="ai-toggle-btn" onclick="toggleAIPanel()" id="aiToggleBtn">▼</button>
+        </div>
+        <div class="ai-assistant-content" id="aiAssistantContent">
+            <div class="empty-advice-message">
+                <div class="empty-icon">🤖</div>
+                <div>AI-помощник будет анализировать переписку и предлагать ответы...</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="chat-messages" id="chatMessages">
+        <div class="loading-messages">
+            <div class="loading-spinner"></div>
+            <div>Загрузка сообщений...</div>
+        </div>
+    </div>
+    
+    {% if chat.status == 'ACTIVE' or chat.status == 'WAITING' %}
+    
+    <!-- Встроенный виджет голосового звонка -->
+    {% if chat.status == 'ACTIVE' %}
+    <div id="voiceCallWidget" class="voice-call-widget collapsed">
+        <div class="voice-call-widget-header" onclick="toggleVoiceCallWidget()">
+            <div class="voice-call-widget-title">
+                <span class="voice-call-icon">📞</span>
+                <span class="voice-call-status-text" id="voiceCallStatusText">Голосовой звонок</span>
+            </div>
+            <div class="voice-call-widget-controls">
+                <span id="voiceCallTimer" class="voice-call-timer hidden">00:00</span>
+                <button class="voice-call-toggle-btn" id="voiceCallToggleBtn">▼</button>
+            </div>
+        </div>
+        
+        <div class="voice-call-widget-content">
+            <div id="voiceCallInitControls" class="voice-call-controls">
+                <button class="btn btn-primary" onclick="startVoiceCallFromChat()">
+                    📞 Начать звонок
+                </button>
+            </div>
+            
+            <div id="voiceCallActiveControls" class="voice-call-controls hidden">
+                <div class="voice-call-info">
+                    <div class="voice-call-participants">
+                        <span>Вы ↔ {% if chat.operator %}{{ chat.operator.username }}{% else %}Оператор{% endif %}</span>
+                    </div>
+                </div>
+                <button class="btn btn-danger" onclick="endVoiceCallFromChat()">
+                    📞 Завершить звонок
+                </button>
+            </div>
+            
+            <div id="voiceCallIncomingControls" class="voice-call-controls hidden">
+                <div class="voice-call-info">
+                    <p>Входящий звонок...</p>
+                </div>
+                <div class="voice-call-buttons">
+                    <button class="btn btn-success" onclick="answerVoiceCallFromChat()">✓ Принять</button>
+                    <button class="btn btn-danger" onclick="rejectVoiceCallFromChat()">✕ Отклонить</button>
+                </div>
+            </div>
+            
+            <div id="voiceCallPermissionSection" class="voice-call-permission hidden">
+                <button class="btn btn-secondary btn-sm" onclick="requestMicPermissionForChat()">
+                    🎤 Разрешить доступ к микрофону
+                </button>
+                <div id="voiceCallPermissionStatus" class="voice-call-permission-status"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="chat-input-container">
+        <div class="chat-input-wrapper" id="chatInputWrapper">
+            <!-- Файл предпросмотр -->
+            <div id="filePreview" class="file-preview hidden"></div>
+            
+            <!-- Voice message запись -->
+            <div id="voiceRecording" class="voice-recording hidden">
+                <div class="voice-recording-info">
+                    <span class="recording-indicator">🔴</span>
+                    <span id="recordingTime">00:00</span>
+                    <button id="cancelVoiceBtn" class="btn btn-sm btn-danger">Отмена</button>
+                    <button id="sendVoiceBtn" class="btn btn-sm btn-success">Отправить</button>
+                </div>
+            </div>
+            
+            <div class="chat-input-controls">
+                <!-- Кнопки инструментов -->
+                <div class="chat-toolbar">
+                    <button id="attachFileBtn" class="toolbar-btn" title="Прикрепить файл">📎</button>
+                    <button id="emojiBtn" class="toolbar-btn" title="Emoji">😀</button>
+                    <button id="voiceMsgBtn" class="toolbar-btn" title="Голосовое сообщение">🎤</button>
+                    <button id="formatBtn" class="toolbar-btn" title="Форматирование">**</button>
+                    <input type="file" id="fileInput" multiple style="display: none;" accept="image/*,application/pdf,.doc,.docx,.txt,.zip">
+                </div>
+                
+                <textarea 
+                    id="messageInput" 
+                    class="chat-input" 
+                    placeholder="Введите ваше сообщение... (Ctrl+B для жирного, Ctrl+I для курсива)"
+                    rows="2"
+                ></textarea>
+                
+                <button id="sendBtn" class="btn btn-primary btn-send">
+                    <span>Отправить</span>
+                </button>
+            </div>
+            
+            <!-- Emoji picker -->
+            <div id="emojiPicker" class="emoji-picker hidden"></div>
+        </div>
+    </div>
+    {% else %}
+    <div class="chat-closed-message">
+        <p>Чат закрыт. Вы не можете отправлять сообщения.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+const chatId = {{ chat.id }};
+const currentUserId = {{ user.id }};
+const currentUserRole = '{{ user.role }}';
+const calleeId = {% if chat.operator %}{{ chat.operator.id }}{% else %}null{% endif %};
+let messagePollInterval = null;
+let aiSuggestionsInterval = null;
+let lastAnalyzedMessageId = null;
+
+// WebRTC для встроенного виджета звонка
+let callSocket = null;
+let callId = null;
+let localStream = null;
+let remoteStream = null;
+let peerConnection = null;
+let callStartTime = null;
+let callTimerInterval = null;
+
+const rtcConfiguration = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+    ]
+};
+
+// Загрузка статуса чата
+async function loadChatStatus() {
+    try {
+        const response = await fetch(`/api/chats/${chatId}`, {
+            credentials: 'same-origin'
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.chat) {
+            updateChatStatus(data.chat);
+        }
+    } catch (error) {
+        console.error('Error loading chat status:', error);
+    }
+}
+
+// Обновление статуса чата в интерфейсе
+function updateChatStatus(chat) {
+    const statusContainer = document.querySelector('.chat-status');
+    if (!statusContainer) return;
+    
+    let statusHtml = '';
+    if (chat.status === 'WAITING') {
+        statusHtml = '<span class="status-badge status-waiting">⏳ Ожидает оператора</span>';
+    } else if (chat.status === 'ACTIVE') {
+        statusHtml = '<span class="status-badge status-active">✅ Активен</span>';
+        if (chat.operator) {
+            statusHtml += `<span class="operator-name">Оператор: ${escapeHtml(chat.operator.username)}</span>`;
+        }
+    } else {
+        statusHtml = '<span class="status-badge status-closed">🔒 Закрыт</span>';
+    }
+    
+    statusContainer.innerHTML = statusHtml;
+    
+    // Обновляем возможность отправки сообщений
+    const inputContainer = document.querySelector('.chat-input-container');
+    const closedMessage = document.querySelector('.chat-closed-message');
+    const closeChatBtn = document.getElementById('closeChatBtn');
+    
+    if (chat.status === 'ACTIVE' || chat.status === 'WAITING') {
+        if (inputContainer) inputContainer.style.display = 'block';
+        if (closedMessage) closedMessage.style.display = 'none';
+        if (closeChatBtn && chat.status === 'ACTIVE') {
+            closeChatBtn.style.display = 'inline-block';
+        }
+    } else {
+        if (inputContainer) inputContainer.style.display = 'none';
+        if (closedMessage) closedMessage.style.display = 'block';
+        if (closeChatBtn) closeChatBtn.style.display = 'none';
+    }
+}
+
+// Закрытие чата
+async function closeChat() {
+    if (!confirm('Вы уверены, что хотите закрыть чат? После закрытия вы не сможете отправлять сообщения.')) {
+        return;
+    }
+    
+    const closeBtn = document.getElementById('closeChatBtn');
+    if (closeBtn) {
+        closeBtn.disabled = true;
+        closeBtn.innerHTML = 'Закрытие...';
+    }
+    
+    try {
+        const response = await fetch(`/api/chats/${chatId}/close`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+            alert('Ошибка доступа');
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Обновляем статус чата
+            loadChatStatus();
+            alert('Чат успешно закрыт');
+        } else {
+            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        console.error('Error closing chat:', error);
+        alert('Произошла ошибка при закрытии чата');
+    } finally {
+        if (closeBtn) {
+            closeBtn.disabled = false;
+            closeBtn.innerHTML = '🔒 Закрыть чат';
+        }
+    }
+}
+
+// Загрузка сообщений
+async function loadMessages() {
+    try {
+        const response = await fetch(`/api/chats/${chatId}/messages`, {
+            credentials: 'same-origin'
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayMessages(data.messages);
+            
+            // Егер оператор болса, AI-көмекшілерді жүктейміз
+            {% if user.role == 'operator' or user.role == 'admin' %}
+            if (data.messages && data.messages.length > 0) {
+                // Соңғы клиент хабарламасын табамыз
+                const lastUserMessage = data.messages.filter(msg => msg.is_from_user).pop();
+                if (lastUserMessage && lastUserMessage.id !== lastAnalyzedMessageId) {
+                    lastAnalyzedMessageId = lastUserMessage.id;
+                    // AI-көмекшілерді жүктейміз (жедел емес, 1 секунд кейін)
+                    setTimeout(() => loadAISuggestions(), 1000);
+                }
+            }
+            {% endif %}
+        }
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+// Markdown форматирование (простое)
+function formatMarkdown(text) {
+    if (!text) return '';
+    // Bold: **text**
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Italic: *text*
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // Code: `code`
+    text = text.replace(/`(.+?)`/g, '<code style="background: #f1f5f9; padding: 0.2em 0.4em; border-radius: 3px; font-family: monospace;">$1</code>');
+    // Code block: ```code```
+    text = text.replace(/```([\s\S]+?)```/g, '<pre style="background: #f1f5f9; padding: 0.5rem; border-radius: 4px; overflow-x: auto;"><code>$1</code></pre>');
+    // Links
+    text = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+    // Line breaks
+    text = text.replace(/\n/g, '<br>');
+    return text;
+}
+
+// Отображение сообщений
+function displayMessages(messages) {
+    const container = document.getElementById('chatMessages');
+    
+    if (messages.length === 0) {
+        container.innerHTML = '<div class="no-messages">Пока нет сообщений. Начните общение!</div>';
+        return;
+    }
+    
+    container.innerHTML = messages.map(msg => {
+        const isOwn = msg.sender_id === currentUserId;
+        const time = new Date(msg.created_at).toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        let messageContent = '';
+        const msgType = msg.message_type || 'text';
+        
+        // Обрабатываем разные типы сообщений
+        if (msgType === 'image' && msg.attachment_url) {
+            messageContent = `
+                <div class="message-attachment">
+                    <img src="${msg.attachment_url}" alt="${msg.attachment_filename || 'Image'}" 
+                         onclick="window.open('${msg.attachment_url}', '_blank')"
+                         style="max-width: 300px; max-height: 300px; border-radius: 8px; cursor: pointer;">
+                </div>
+            `;
+        } else if (msgType === 'voice' && msg.attachment_url) {
+            messageContent = `
+                <div class="message-attachment voice-message">
+                    <audio controls style="width: 100%; max-width: 300px;">
+                        <source src="${msg.attachment_url}" type="audio/${msg.attachment_url.split('.').pop()}">
+                    </audio>
+                    <span style="font-size: 0.875rem; color: var(--color-text-light);">🎤 Голосовое сообщение</span>
+                </div>
+            `;
+        } else if (msgType === 'file' && msg.attachment_url) {
+            const fileSize = msg.attachment_size ? formatFileSize(msg.attachment_size) : '';
+            messageContent = `
+                <div class="message-attachment file-message">
+                    <a href="${msg.attachment_url}" download="${msg.attachment_filename || 'file'}" 
+                       style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem; 
+                              background: var(--color-bg-secondary); border-radius: 4px; text-decoration: none; color: var(--color-primary);">
+                        📎 ${msg.attachment_filename || 'Файл'} ${fileSize}
+                    </a>
+                </div>
+            `;
+        }
+        
+        // Обрабатываем текст сообщения
+        let messageText = '';
+        if (msg.message) {
+            if (msg.is_formatted) {
+                messageText = formatMarkdown(escapeHtml(msg.message));
+            } else {
+                messageText = escapeHtml(msg.message).replace(/\n/g, '<br>');
+            }
+        }
+        
+        // Обрабатываем специальные кнопки в сообщениях
+        let routeButton = '';
+        const routeButtonMatch = messageText.match(/\[ROUTE_BUTTON:(.+?)\]/);
+        if (routeButtonMatch) {
+            const routeUrl = routeButtonMatch[1];
+            messageText = messageText.replace(/\[ROUTE_BUTTON:.+?\]/, '');
+            routeButton = `<div style="margin-top: var(--spacing-sm);">
+                <a href="${routeUrl}" class="btn btn-primary btn-sm" style="display: inline-block; text-decoration: none; color: white; padding: 0.5rem 1rem; border-radius: var(--radius-sm); background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); font-weight: 600; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">
+                    🗺️ Открыть маршрут
+                </a>
+            </div>`;
+        }
+        
+        return `
+            <div class="message ${isOwn ? 'message-own' : 'message-other'}">
+                <div class="message-content">
+                    ${messageContent}
+                    ${messageText ? `<div class="message-text">${messageText}</div>` : ''}
+                    ${routeButton}
+                    <div class="message-time">${time}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.scrollTop = container.scrollHeight;
+}
+
+// Форматирование размера файла
+function formatFileSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// ========== ВСТРОЕННЫЙ ВИДЖЕТ ГОЛОСОВОГО ЗВОНКА ==========
+
+// Переключение видимости виджета
+function toggleVoiceCallWidget() {
+    const widget = document.getElementById('voiceCallWidget');
+    if (widget) {
+        widget.classList.toggle('collapsed');
+        const btn = document.getElementById('voiceCallToggleBtn');
+        if (btn) {
+            btn.textContent = widget.classList.contains('collapsed') ? '▲' : '▼';
+        }
+    }
+}
+
+// Получение доступа к микрофону
+async function getMediaStream() {
+    const constraints = { audio: true, video: false };
+    
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+            return await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (error) {
+            console.warn('mediaDevices failed, trying legacy:', error);
+        }
+    }
+    
+    const getUserMedia = navigator.getUserMedia || 
+                        navigator.webkitGetUserMedia || 
+                        navigator.mozGetUserMedia ||
+                        navigator.msGetUserMedia;
+    
+    if (getUserMedia) {
+        return new Promise((resolve, reject) => {
+            getUserMedia.call(navigator, constraints,
+                (stream) => resolve(stream),
+                (error) => {
+                    const legacyError = new Error();
+                    if (error.code === 1 || error.name === 'PERMISSION_DENIED') {
+                        legacyError.name = 'NotAllowedError';
+                        legacyError.message = 'Разрешите доступ к микрофону в настройках браузера.';
+                    } else if (error.code === 2) {
+                        legacyError.name = 'NotFoundError';
+                        legacyError.message = 'Микрофон не найден.';
+                    } else {
+                        legacyError.name = error.name || 'UnknownError';
+                        legacyError.message = error.message || 'Не удалось получить доступ к микрофону.';
+                    }
+                    reject(legacyError);
+                }
+            );
+        });
+    }
+    
+    throw new Error('Браузер не поддерживает доступ к микрофону.');
+}
+
+// Инициализация Socket.IO для звонков
+function initCallSocket() {
+    if (callSocket) return;
+    
+    callSocket = io();
+    
+    callSocket.on('connect', () => {
+        console.log('Call socket connected');
+    });
+    
+    callSocket.on('incoming_call', (data) => {
+        if (data.chat_id === chatId) {
+            handleIncomingCall(data);
+        }
+    });
+    
+    callSocket.on('call_accepted', (data) => {
+        if (data.call_id === callId) {
+            handleCallAccepted();
+        }
+    });
+    
+    callSocket.on('call_rejected', (data) => {
+        if (data.call_id === callId) {
+            handleCallRejected();
+        }
+    });
+    
+    callSocket.on('call_ended', (data) => {
+        if (data.call_id === callId) {
+            handleCallEnded();
+        }
+    });
+    
+    callSocket.on('webrtc_offer', async (data) => {
+        if (data.call_id === callId) {
+            await handleWebRTCOffer(data.offer);
+        }
+    });
+    
+    callSocket.on('webrtc_answer', async (data) => {
+        if (data.call_id === callId) {
+            await handleWebRTCAnswer(data.answer);
+        }
+    });
+    
+    callSocket.on('webrtc_ice_candidate', async (data) => {
+        if (data.call_id === callId) {
+            await handleICE(data.candidate);
+        }
+    });
+}
+
+// Начало звонка
+async function startVoiceCallFromChat() {
+    if (!calleeId) {
+        alert('Собеседник не найден');
+        return;
+    }
+    
+    try {
+        updateVoiceCallStatus('Установка соединения...');
+        initCallSocket();
+        
+        callId = 'call_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        localStream = await getMediaStream();
+        
+        peerConnection = new RTCPeerConnection(rtcConfiguration);
+        
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+        
+        peerConnection.ontrack = (event) => {
+            remoteStream = event.streams[0];
+            const audio = new Audio();
+            audio.srcObject = remoteStream;
+            audio.play();
+        };
+        
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate && callSocket) {
+                callSocket.emit('webrtc_ice_candidate', {
+                    call_id: callId,
+                    candidate: event.candidate
+                });
+            }
+        };
+        
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        
+        callSocket.emit('call_initiate', {
+            chat_id: chatId,
+            call_id: callId
+        });
+        
+        callSocket.emit('webrtc_offer', {
+            call_id: callId,
+            offer: offer
+        });
+        
+        document.getElementById('voiceCallInitControls').classList.add('hidden');
+        document.getElementById('voiceCallWidget').classList.add('calling');
+        
+    } catch (error) {
+        console.error('Error starting call:', error);
+        let errorMsg = 'Не удалось начать звонок. ';
+        if (error.name === 'NotAllowedError') {
+            errorMsg += 'Разрешите доступ к микрофону.';
+            showMicPermissionSection();
+        } else {
+            errorMsg += error.message || 'Попробуйте еще раз.';
+        }
+        alert(errorMsg);
+        updateVoiceCallStatus('Ошибка');
+    }
+}
+
+// Принятие звонка
+async function answerVoiceCallFromChat() {
+    try {
+        updateVoiceCallStatus('Принятие звонка...');
+        initCallSocket();
+        
+        localStream = await getMediaStream();
+        
+        peerConnection = new RTCPeerConnection(rtcConfiguration);
+        
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+        
+        peerConnection.ontrack = (event) => {
+            remoteStream = event.streams[0];
+            const audio = new Audio();
+            audio.srcObject = remoteStream;
+            audio.play();
+        };
+        
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate && callSocket) {
+                callSocket.emit('webrtc_ice_candidate', {
+                    call_id: callId,
+                    candidate: event.candidate
+                });
+            }
+        };
+        
+        if (callSocket) {
+            callSocket.emit('call_answer', {
+                call_id: callId,
+                answer: 'accept'
+            });
+        }
+        
+        document.getElementById('voiceCallIncomingControls').classList.add('hidden');
+        document.getElementById('voiceCallActiveControls').classList.remove('hidden');
+        document.getElementById('voiceCallWidget').classList.remove('ringing');
+        document.getElementById('voiceCallWidget').classList.add('calling');
+        
+    } catch (error) {
+        console.error('Error answering call:', error);
+        alert('Ошибка при принятии звонка: ' + (error.message || 'Неизвестная ошибка'));
+    }
+}
+
+// Отклонение звонка
+function rejectVoiceCallFromChat() {
+    if (callSocket && callId) {
+        callSocket.emit('call_answer', {
+            call_id: callId,
+            answer: 'reject'
+        });
+    }
+    resetCallWidget();
+}
+
+// Завершение звонка
+function endVoiceCallFromChat() {
+    if (callSocket && callId) {
+        callSocket.emit('call_end', {
+            call_id: callId
+        });
+    }
+    
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+    
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    
+    if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+        callTimerInterval = null;
+    }
+    
+    resetCallWidget();
+}
+
+// Обработка входящего звонка
+function handleIncomingCall(data) {
+    callId = data.call_id;
+    document.getElementById('voiceCallIncomingControls').classList.remove('hidden');
+    document.getElementById('voiceCallInitControls').classList.add('hidden');
+    document.getElementById('voiceCallWidget').classList.add('ringing');
+    updateVoiceCallStatus('Входящий звонок...');
+}
+
+// Обработка принятия звонка
+function handleCallAccepted() {
+    document.getElementById('voiceCallInitControls').classList.add('hidden');
+    document.getElementById('voiceCallActiveControls').classList.remove('hidden');
+    callStartTime = Date.now();
+    callTimerInterval = setInterval(updateCallTimer, 1000);
+    updateVoiceCallStatus('Звонок активен');
+}
+
+// Обработка отклонения
+function handleCallRejected() {
+    alert('Звонок отклонен');
+    resetCallWidget();
+}
+
+// Обработка завершения
+function handleCallEnded() {
+    alert('Собеседник завершил звонок');
+    resetCallWidget();
+}
+
+// Обработка WebRTC offer
+async function handleWebRTCOffer(offer) {
+    try {
+        if (!peerConnection) {
+            localStream = await getMediaStream();
+            peerConnection = new RTCPeerConnection(rtcConfiguration);
+            
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+            
+            peerConnection.ontrack = (event) => {
+                remoteStream = event.streams[0];
+                const audio = new Audio();
+                audio.srcObject = remoteStream;
+                audio.play();
+            };
+            
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate && callSocket) {
+                    callSocket.emit('webrtc_ice_candidate', {
+                        call_id: callId,
+                        candidate: event.candidate
+                    });
+                }
+            };
+        }
+        
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        
+        if (callSocket) {
+            callSocket.emit('webrtc_answer', {
+                call_id: callId,
+                answer: answer
+            });
+        }
+    } catch (error) {
+        console.error('Error handling offer:', error);
+    }
+}
+
+// Обработка WebRTC answer
+async function handleWebRTCAnswer(answer) {
+    try {
+        if (peerConnection) {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        }
+    } catch (error) {
+        console.error('Error handling answer:', error);
+    }
+}
+
+// Обработка ICE candidate
+async function handleICE(candidate) {
+    try {
+        if (peerConnection) {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+    } catch (error) {
+        console.error('Error handling ICE:', error);
+    }
+}
+
+// Обновление статуса звонка
+function updateVoiceCallStatus(status) {
+    const statusText = document.getElementById('voiceCallStatusText');
+    if (statusText) {
+        statusText.textContent = status;
+    }
+}
+
+// Обновление таймера
+function updateCallTimer() {
+    if (callStartTime) {
+        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        const timer = document.getElementById('voiceCallTimer');
+        if (timer) {
+            timer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            timer.classList.remove('hidden');
+        }
+    }
+}
+
+// Сброс виджета
+function resetCallWidget() {
+    document.getElementById('voiceCallInitControls').classList.remove('hidden');
+    document.getElementById('voiceCallActiveControls').classList.add('hidden');
+    document.getElementById('voiceCallIncomingControls').classList.add('hidden');
+    document.getElementById('voiceCallWidget').classList.remove('calling', 'ringing');
+    const timer = document.getElementById('voiceCallTimer');
+    if (timer) {
+        timer.classList.add('hidden');
+    }
+    updateVoiceCallStatus('Голосовой звонок');
+    callId = null;
+    callStartTime = null;
+}
+
+// Показать секцию разрешений
+function showMicPermissionSection() {
+    const section = document.getElementById('voiceCallPermissionSection');
+    if (section) {
+        section.classList.remove('hidden');
+    }
+}
+
+// Запрос разрешения микрофона
+async function requestMicPermissionForChat() {
+    try {
+        const stream = await getMediaStream();
+        stream.getTracks().forEach(track => track.stop());
+        const section = document.getElementById('voiceCallPermissionSection');
+        if (section) {
+            section.classList.add('hidden');
+        }
+        alert('✅ Доступ к микрофону разрешен!');
+    } catch (error) {
+        alert('Ошибка: ' + (error.message || 'Не удалось получить доступ к микрофону'));
+    }
+}
+
+// Отправка сообщения (определяется ниже в DOMContentLoaded с поддержкой markdown)
+
+// ========== КЕҢЕЙТІЛГЕН ЧАТ ФУНКЦИЯЛАРЫ ==========
+
+let selectedFiles = [];
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecordingVoice = false;
+let recordingTimer = null;
+let recordingStartTime = null;
+
+// Файл жүктеу
+document.getElementById('attachFileBtn')?.addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+});
+
+document.getElementById('fileInput')?.addEventListener('change', async function(e) {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    for (const file of files) {
+        await uploadChatFile(file);
+    }
+    e.target.value = ''; // Reset input
+});
+
+async function uploadChatFile(file) {
+    // Показываем файл в preview
+    showFilePreview(file);
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch(`/api/chats/${chatId}/upload-file`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Upload failed');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Обновляем preview с URL
+            updateFilePreview(file.name, data.file_url);
+            // Автоматически отправляем сообщение с файлом
+            await sendMessageWithAttachment(data.file_url, data.filename || file.name, data.file_size, data.message_type);
+            // Очищаем preview
+            clearFilePreview(file.name);
+        }
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        alert('Ошибка загрузки файла: ' + error.message);
+        removeFilePreview(file.name);
+    }
+}
+
+// Файл preview функциялары
+function showFilePreview(file) {
+    const preview = document.getElementById('filePreview');
+    preview.classList.remove('hidden');
+    
+    const item = document.createElement('div');
+    item.className = 'file-preview-item';
+    item.id = `preview-${file.name}`;
+    item.innerHTML = `
+        <div class="file-preview-name">
+            <span>📎</span>
+            <span>${escapeHtml(file.name)}</span>
+            <span style="color: var(--color-text-light); font-size: 0.875rem;">(${formatFileSize(file.size)})</span>
+        </div>
+        <div class="loading-spinner" style="width: 16px; height: 16px;"></div>
+    `;
+    preview.appendChild(item);
+}
+
+function updateFilePreview(filename, url) {
+    const item = document.getElementById(`preview-${filename}`);
+    if (item) {
+        item.innerHTML = `
+            <div class="file-preview-name">
+                <span>✅</span>
+                <span>${escapeHtml(filename)}</span>
+            </div>
+        `;
+    }
+}
+
+function clearFilePreview(filename) {
+    const item = document.getElementById(`preview-${filename}`);
+    if (item) {
+        item.remove();
+    }
+    const preview = document.getElementById('filePreview');
+    if (preview.children.length === 0) {
+        preview.classList.add('hidden');
+    }
+}
+
+function removeFilePreview(filename) {
+    clearFilePreview(filename);
+}
+
+// Voice message запись
+document.getElementById('voiceMsgBtn')?.addEventListener('click', async function() {
+    if (isRecordingVoice) {
+        stopVoiceRecording();
+    } else {
+        await startVoiceRecording();
+    }
+});
+
+async function startVoiceRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            await uploadVoiceMessage(audioBlob);
+            stream.getTracks().forEach(track => track.stop());
+        };
+        
+        mediaRecorder.start();
+        isRecordingVoice = true;
+        recordingStartTime = Date.now();
+        
+        // Показываем UI записи
+        document.getElementById('voiceRecording').classList.remove('hidden');
+        document.getElementById('messageInput').style.display = 'none';
+        
+        // Запускаем таймер
+        recordingTimer = setInterval(updateRecordingTimer, 1000);
+    } catch (error) {
+        console.error('Error starting recording:', error);
+        alert('Ошибка доступа к микрофону: ' + error.message);
+    }
+}
+
+function stopVoiceRecording() {
+    if (mediaRecorder && isRecordingVoice) {
+        mediaRecorder.stop();
+        isRecordingVoice = false;
+        
+        if (recordingTimer) {
+            clearInterval(recordingTimer);
+            recordingTimer = null;
+        }
+        
+        document.getElementById('voiceRecording').classList.add('hidden');
+        document.getElementById('messageInput').style.display = 'block';
+    }
+}
+
+document.getElementById('cancelVoiceBtn')?.addEventListener('click', function() {
+    if (mediaRecorder && isRecordingVoice) {
+        mediaRecorder.stop();
+        audioChunks = [];
+        stopVoiceRecording();
+    }
+});
+
+document.getElementById('sendVoiceBtn')?.addEventListener('click', function() {
+    stopVoiceRecording();
+});
+
+function updateRecordingTimer() {
+    if (recordingStartTime) {
+        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        document.getElementById('recordingTime').textContent = 
+            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+}
+
+async function uploadVoiceMessage(audioBlob) {
+    const formData = new FormData();
+    formData.append('file', audioBlob, `voice_${Date.now()}.webm`);
+    
+    try {
+        const response = await fetch(`/api/chats/${chatId}/upload-file`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            await sendMessageWithAttachment(data.file_url, 'Голосовое сообщение', data.file_size, 'voice');
+        }
+    } catch (error) {
+        console.error('Error uploading voice:', error);
+        alert('Ошибка загрузки голосового сообщения');
+    }
+}
+
+// Отправка сообщения с файлом
+async function sendMessageWithAttachment(fileUrl, filename, fileSize, messageType) {
+    try {
+        const response = await fetch(`/api/chats/${chatId}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                message: filename || '',
+                message_type: messageType,
+                attachment_url: fileUrl,
+                attachment_filename: filename,
+                attachment_size: fileSize
+            })
+        });
+        
+        if (response.ok) {
+            loadMessages();
+        }
+    } catch (error) {
+        console.error('Error sending message with attachment:', error);
+    }
+}
+
+// Emoji picker
+const commonEmojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕'];
+
+document.getElementById('emojiBtn')?.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const picker = document.getElementById('emojiPicker');
+    if (picker.classList.contains('hidden')) {
+        // Создаем emoji picker
+        picker.innerHTML = commonEmojis.map(emoji => 
+            `<span class="emoji-item" onclick="insertEmoji('${emoji}')">${emoji}</span>`
+        ).join('');
+        picker.classList.remove('hidden');
+        document.getElementById('emojiBtn').classList.add('active');
+    } else {
+        picker.classList.add('hidden');
+        document.getElementById('emojiBtn').classList.remove('active');
+    }
+});
+
+// Закрытие emoji picker при клике вне его
+document.addEventListener('click', function(e) {
+    const picker = document.getElementById('emojiPicker');
+    const emojiBtn = document.getElementById('emojiBtn');
+    if (picker && !picker.contains(e.target) && e.target !== emojiBtn) {
+        picker.classList.add('hidden');
+        if (emojiBtn) emojiBtn.classList.remove('active');
+    }
+});
+
+function insertEmoji(emoji) {
+    const input = document.getElementById('messageInput');
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const text = input.value;
+    input.value = text.substring(0, start) + emoji + text.substring(end);
+    input.focus();
+    input.setSelectionRange(start + emoji.length, start + emoji.length);
+    document.getElementById('emojiPicker').classList.add('hidden');
+}
+
+// Markdown форматирование (Ctrl+B, Ctrl+I)
+document.getElementById('messageInput')?.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'b') {
+            e.preventDefault();
+            wrapText('**', '**');
+        } else if (e.key === 'i') {
+            e.preventDefault();
+            wrapText('*', '*');
+        } else if (e.key === 'k') {
+            e.preventDefault();
+            wrapText('`', '`');
+        }
+    }
+});
+
+function wrapText(before, after) {
+    const input = document.getElementById('messageInput');
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const selectedText = input.value.substring(start, end);
+    const text = input.value;
+    input.value = text.substring(0, start) + before + selectedText + after + text.substring(end);
+    input.focus();
+    input.setSelectionRange(start + before.length, start + before.length + selectedText.length);
+}
+
+// ========== AI-КӨМЕКШІЛЕР ФУНКЦИЯЛАРЫ ==========
+
+// AI панельді ашу/жабу
+function toggleAIPanel() {
+    const panel = document.getElementById('aiAssistantPanel');
+    if (panel) {
+        panel.classList.toggle('collapsed');
+    }
+}
+
+// AI-көмекшілерді жүктеу
+async function loadAISuggestions() {
+    // Тек операторлар үшін
+    if (currentUserRole !== 'operator' && currentUserRole !== 'admin') {
+        return;
+    }
+    
+    const aiContainer = document.getElementById('aiAssistantContent');
+    if (!aiContainer) return;
+    
+    try {
+        const response = await fetch(`/api/chats/${chatId}/ai-suggestions`, {
+            credentials: 'same-origin'
+        });
+        
+        if (response.status === 401 || response.status === 403) {
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error('Failed to load AI suggestions');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.suggestions) {
+            displayAISuggestions(data.suggestions);
+        }
+    } catch (error) {
+        console.error('Error loading AI suggestions:', error);
+    }
+}
+
+// AI ұсыныстарын көрсету
+function displayAISuggestions(suggestions) {
+    const aiContainer = document.getElementById('aiAssistantContent');
+    if (!aiContainer) return;
+    
+    let html = '<div style="line-height: 1.6;">';
+    
+    // Резюме
+    if (suggestions.summary) {
+        html += `
+            <div class="ai-suggestion-card" style="border-left-color: #2196f3;">
+                <div class="ai-suggestion-title">
+                    📋 Резюме переписки
+                </div>
+                <div class="ai-suggestion-text">${escapeHtml(suggestions.summary)}</div>
+            </div>
+        `;
+    }
+    
+    // Sentiment (эмоция)
+    if (suggestions.sentiment) {
+        const sentimentEmoji = {
+            'позитивный': '😊',
+            'нейтральный': '😐',
+            'негативный': '😟'
+        };
+        const sentimentColor = {
+            'позитивный': '#10b981',
+            'нейтральный': '#64748b',
+            'негативный': '#ef4444'
+        };
+        const emoji = sentimentEmoji[suggestions.sentiment] || '😐';
+        const color = sentimentColor[suggestions.sentiment] || '#64748b';
+        
+        html += `
+            <div class="ai-suggestion-card" style="border-left-color: ${color};">
+                <div class="ai-suggestion-title" style="color: ${color};">
+                    ${emoji} Эмоциональное состояние клиента: ${suggestions.sentiment}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Ұсынылған жауап
+    if (suggestions.suggested_response) {
+        const formattedResponse = escapeHtml(suggestions.suggested_response)
+            .replace(/\n/g, '<br>')
+            .replace(/(\d+\.\s)/g, '<strong style="color: #2563eb; font-weight: 600;">$1</strong>');
+        
+        html += `
+            <div class="ai-suggestion-card" style="border-left-color: #10b981; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+                <div class="ai-suggestion-title" style="color: #10b981;">
+                    💡 Рекомендуемый ответ
+                </div>
+                <div class="ai-suggestion-text" style="color: #1e293b; line-height: 1.8;">
+                    ${formattedResponse}
+                </div>
+                <div class="ai-suggestion-actions">
+                    <button class="ai-copy-btn" onclick="copyToClipboard(\`${escapeHtml(suggestions.suggested_response).replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, this)">
+                        📋 Копировать ответ
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Негізгі нүктелер
+    if (suggestions.key_points && suggestions.key_points.length > 0) {
+        html += `
+            <div class="ai-suggestion-card" style="border-left-color: #f59e0b;">
+                <div class="ai-suggestion-title" style="color: #f59e0b;">
+                    🔑 Ключевые моменты
+                </div>
+                <ul style="color: #1e293b; line-height: 1.8; margin: 0; padding-left: 1.5rem;">
+                    ${suggestions.key_points.map(point => `<li>${escapeHtml(point)}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    
+    aiContainer.innerHTML = html;
+}
+
+// Текстті буферге көшіру
+function copyToClipboard(text, buttonElement) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Кнопкаға feedback
+        if (buttonElement) {
+            buttonElement.textContent = '✓ Скопировано!';
+            buttonElement.style.background = '#10b981';
+            setTimeout(() => {
+                buttonElement.textContent = '📋 Копировать ответ';
+                buttonElement.style.background = '';
+            }, 2000);
+        }
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Не удалось скопировать текст');
+    });
+}
+
+// Обработчики событий
+document.addEventListener('DOMContentLoaded', function() {
+    loadMessages();
+    loadChatStatus();
+    
+    // Инициализация Socket.IO для звонков
+    {% if chat.status == 'ACTIVE' %}
+    initCallSocket();
+    {% endif %}
+    
+    // Автообновление сообщений и статуса каждые 2 секунды
+    messagePollInterval = setInterval(() => {
+        loadMessages();
+        loadChatStatus();
+    }, 2000);
+    
+    // AI-көмекшілерді жүктеу (тек операторлар үшін)
+    {% if user.role == 'operator' or user.role == 'admin' %}
+    // Бірінші жүктеу
+    loadAISuggestions();
+    
+    // Автоматикалық жаңарту (5 секунд сайын)
+    aiSuggestionsInterval = setInterval(() => {
+        loadAISuggestions();
+    }, 5000);
+    {% endif %}
+    
+    // Отправка по кнопке
+    document.getElementById('sendBtn')?.addEventListener('click', sendMessage);
+    
+    // Отправка по Enter
+    document.getElementById('messageInput')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Закрытие чата
+    const closeChatBtn = document.getElementById('closeChatBtn');
+    if (closeChatBtn) {
+        closeChatBtn.addEventListener('click', closeChat);
+    }
+    
+    // Определяем sendMessage с поддержкой markdown
+    window.sendMessage = async function() {
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        const sendBtn = document.getElementById('sendBtn');
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<span class="loader"></span> Отправка...';
+        
+        try {
+            // Проверяем, есть ли markdown форматирование
+            const hasMarkdown = message.includes('**') || message.includes('*') || message.includes('`');
+            
+            const response = await fetch(`/api/chats/${chatId}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ 
+                    message,
+                    is_formatted: hasMarkdown
+                })
+            });
+            
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            if (response.status === 403) {
+                const errorData = await response.json().catch(() => ({ error: 'Доступ запрещен' }));
+                alert('Ошибка: ' + (errorData.error || 'Доступ запрещен. Возможно, чат еще не принят оператором.'));
+                setTimeout(() => location.reload(), 2000);
+                return;
+            }
+            
+            if (response.status === 400) {
+                const errorData = await response.json().catch(() => ({ error: 'Ошибка запроса' }));
+                alert('Ошибка: ' + (errorData.error || 'Неверный запрос'));
+                return;
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                input.value = '';
+                loadMessages();
+                
+                // Егер оператор болса, AI-көмекшілерді жаңартамыз
+                {% if user.role == 'operator' or user.role == 'admin' %}
+                setTimeout(() => loadAISuggestions(), 1000);
+                {% endif %}
+            } else {
+                alert('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            alert('Произошла ошибка при отправке сообщения');
+        } finally {
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<span>Отправить</span>';
+        }
+    };
+});
+
+// Очистка при закрытии страницы
+window.addEventListener('beforeunload', function() {
+    if (messagePollInterval) {
+        clearInterval(messagePollInterval);
+    }
+    
+    if (aiSuggestionsInterval) {
+        clearInterval(aiSuggestionsInterval);
+    }
+    
+    // Очистка звонка
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+    }
+    if (peerConnection) {
+        peerConnection.close();
+    }
+    if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+    }
+    if (callSocket) {
+        callSocket.disconnect();
+    }
+});
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}
+

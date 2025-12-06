@@ -1,0 +1,34 @@
+[
+  {
+    "transaction_id": 284,
+    "customer_id": "2938208716",
+    "action": "request_verification",
+    "executed_by": "admin",
+    "executed_at": "2025-12-04T01:15:28.981458",
+    "status": "completed"
+  },
+  {
+    "transaction_id": 284,
+    "customer_id": "2938208716",
+    "action": "escalate",
+    "executed_by": "admin",
+    "executed_at": "2025-12-04T01:15:35.716004",
+    "status": "completed"
+  },
+  {
+    "transaction_id": 890,
+    "customer_id": "455936473",
+    "action": "request_verification",
+    "executed_by": "admin",
+    "executed_at": "2025-12-04T01:21:59.112934",
+    "status": "completed"
+  },
+  {
+    "transaction_id": 890,
+    "customer_id": "455936473",
+    "action": "block",
+    "executed_by": "admin",
+    "executed_at": "2025-12-04T01:28:43.578806",
+    "status": "completed"
+  }
+]

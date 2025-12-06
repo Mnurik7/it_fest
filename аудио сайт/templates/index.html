@@ -1,0 +1,561 @@
+{% extends "base.html" %}
+
+{% block title %}AI Help Desk{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Убираем overflow из основного контейнера для index страницы */
+main.container {
+    overflow: hidden !important;
+    padding: 0 !important;
+    height: calc(100vh - 80px) !important;
+}
+
+.chatgpt-layout {
+    display: flex;
+    height: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    overflow: hidden;
+}
+
+.tickets-sidebar {
+    width: 300px;
+    min-width: 250px;
+    border-right: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.tickets-sidebar-header {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+.tickets-sidebar-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--color-text);
+}
+
+.tickets-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-md);
+}
+
+.ticket-item {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.ticket-item:hover {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-primary);
+}
+
+.ticket-item.active {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.ticket-item-title {
+    font-weight: 500;
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.9375rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ticket-item-meta {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ticket-item-status {
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.6875rem;
+    font-weight: 500;
+}
+
+.ticket-item-status.open {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.ticket-item-status.in_progress {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.ticket-item-status.resolved {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.ticket-item-status.closed {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.no-tickets {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    color: var(--color-text-light);
+}
+
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-bg);
+}
+
+.chat-messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    background: var(--color-bg);
+}
+
+.chat-message {
+    display: flex;
+    gap: var(--spacing-md);
+    max-width: 85%;
+    min-width: 0;
+}
+
+.chat-message.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.chat-message.assistant {
+    align-self: flex-start;
+}
+
+.message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    overflow: hidden;
+    object-fit: cover;
+}
+
+.message-avatar.user {
+    background: var(--color-primary);
+    color: white;
+}
+
+.message-avatar.user img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.message-avatar.assistant {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text);
+}
+
+.message-content-wrapper {
+    flex: 1;
+    min-width: 0;
+    word-wrap: break-word;
+}
+
+.message-content {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    line-height: 1.6;
+    word-wrap: break-word;
+    word-break: normal;
+    white-space: pre-wrap;
+    font-size: 1rem;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+}
+
+.chat-message.user .message-content {
+    background: var(--color-primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.chat-message.assistant .message-content {
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-bottom-left-radius: 4px;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: var(--color-text-lighter);
+    margin-top: var(--spacing-xs);
+    padding: 0 var(--spacing-sm);
+}
+
+.chat-message.user .message-time {
+    text-align: right;
+}
+
+.message-attachments {
+    margin-top: var(--spacing-sm);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
+.message-attachment {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.chat-input-area {
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+.chat-input-wrapper {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.chat-input-main {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: flex-end;
+    width: 100%;
+}
+
+.chat-input-container {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+}
+
+.chat-input {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    padding-right: 100px;
+    padding-top: 50px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 120px;
+    max-height: 400px;
+    transition: var(--transition);
+    background: var(--color-bg);
+    line-height: 1.6;
+    box-sizing: border-box;
+}
+
+.chat-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.chat-input-actions {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.9);
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chat-input-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-bg);
+    color: var(--color-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: var(--transition);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chat-input-btn:hover {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.chat-input-btn.active {
+    background: var(--color-danger);
+    color: white;
+    border-color: var(--color-danger);
+    animation: pulse-recording 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-recording {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+.file-input-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.file-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.file-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+}
+
+.file-item-name {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-item-remove {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: var(--color-danger);
+    color: white;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    padding: 0;
+    line-height: 1;
+}
+
+.btn-send-chat {
+    padding: var(--spacing-md) var(--spacing-xl);
+    min-width: 120px;
+    height: 52px;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+}
+
+.loading-message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text-light);
+    padding: var(--spacing-md);
+}
+
+.loading-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.loading-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-text-light);
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+.loading-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.voice-status {
+    position: absolute;
+    top: -30px;
+    left: 0;
+    font-size: 0.875rem;
+    color: var(--color-danger);
+    display: none;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.voice-status.active {
+    display: flex;
+}
+
+@media (max-width: 768px) {
+    .chatgpt-layout {
+        flex-direction: column;
+        height: calc(100vh - 80px);
+    }
+    
+    .tickets-sidebar {
+        width: 100%;
+        height: 200px;
+        border-right: none;
+        border-bottom: 1px solid var(--color-border);
+    }
+    
+    .chat-main {
+        flex: 1;
+        min-height: 0;
+    }
+    
+    .chat-input {
+        min-height: 100px;
+        max-height: 300px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chatgpt-layout">
+    <!-- Sidebar with ticket history -->
+    <div class="tickets-sidebar">
+        <div class="tickets-sidebar-header">
+            <h2>История тикетов</h2>
+        </div>
+        <div class="tickets-list" id="ticketsList">
+            <div class="no-tickets">Загрузка...</div>
+        </div>
+    </div>
+    
+    <!-- Main chat area -->
+    <div class="chat-main">
+        <div class="chat-messages-area" id="chatMessagesArea">
+            <!-- Messages will be added here dynamically -->
+        </div>
+        
+        <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+                <div class="chat-input-main">
+                    <div class="chat-input-container">
+                        <div class="voice-status" id="voiceStatus">
+                            <span class="pulse-dot" style="width: 8px; height: 8px; background: var(--color-danger); border-radius: 50%; animation: pulse 1s ease-in-out infinite;"></span>
+                            Идёт запись...
+                        </div>
+                        <textarea 
+                            id="chatInput" 
+                            class="chat-input" 
+                            placeholder="Опишите вашу проблему или задайте вопрос..."
+                            rows="4"
+                        ></textarea>
+                        <div class="chat-input-actions">
+                            <label class="file-input-wrapper">
+                                <input type="file" id="fileInput" class="file-input" multiple accept="*/*" onchange="handleFileSelect(event)">
+                                <button type="button" class="chat-input-btn" title="Прикрепить файл">
+                                    📎
+                                </button>
+                            </label>
+                            <button type="button" id="voiceInputBtn" class="chat-input-btn" onclick="toggleVoiceInput()" title="Голосовой ввод">
+                                🎤
+                            </button>
+                        </div>
+                        <div id="fileList" class="file-list" style="display: none;"></div>
+                    </div>
+                    <button id="sendChatBtn" class="btn btn-primary btn-send-chat">
+                        Отправить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

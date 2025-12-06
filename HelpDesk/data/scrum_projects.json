@@ -1,0 +1,14 @@
+[
+  {
+    "project_id": "PROJ-20251128014105",
+    "name": "Beseu",
+    "description": "ALT.AI чат бот для универа",
+    "owner": "admin",
+    "status": "active",
+    "deadline": "2025-12-07",
+    "created_at": "2025-11-28T01:41:05.926964",
+    "updated_at": "2025-11-28T01:41:05.926977",
+    "sprints": [],
+    "team_members": []
+  }
+]

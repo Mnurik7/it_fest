@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Help Desk{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">AI Help Desk</a>
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">☰</button>
+            <div class="nav-links" id="navLinks">
+                {% if session.get('user_id') %}
+                    {% if session.get('role') == 'user' %}
+                        <a href="/">Создать обращение</a>
+                        <a href="/profile">Мой профиль</a>
+                        <a href="#" id="routeLink" style="display: none;" class="route-link">🗺️ Маршрут</a>
+                    {% elif session.get('role') == 'operator' %}
+                        <a href="/operator">Панель оператора</a>
+                        <a href="#" id="routeLink" style="display: none;" class="route-link">🗺️ Маршрут</a>
+                    {% elif session.get('role') == 'specialist' %}
+                        <a href="/specialist">Панель специалиста</a>
+                        <a href="#" id="routeLink" style="display: none;" class="route-link">🗺️ Маршрут</a>
+                    {% elif session.get('role') == 'admin' %}
+                        <a href="/">Создать обращение</a>
+                        <a href="/admin">Админ-панель</a>
+                        <a href="#" id="routeLink" style="display: none;" class="route-link">🗺️ Маршрут</a>
+                    {% endif %}
+                    <span class="user-info">
+                        <span class="username">{{ session.get('username') }}</span>
+                        <span class="user-role">({{ session.get('role', 'user') }})</span>
+                    </span>
+                    <a href="/logout">Выход</a>
+                {% else %}
+                    <a href="/login">Вход</a>
+                    <a href="/register">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Уведомление о входящем звонке -->
+    <div id="incomingCallNotification" class="call-notification hidden">
+        <div class="call-notification-content">
+            <div class="call-notification-icon">📞</div>
+            <div class="call-notification-info">
+                <div class="call-notification-title">Входящий звонок</div>
+                <div class="call-notification-subtitle" id="callNotificationFrom">От пользователя</div>
+            </div>
+            <div class="call-notification-actions">
+                <button class="btn btn-success btn-sm" id="acceptCallFromNotification">✓ Принять</button>
+                <button class="btn btn-danger btn-sm" id="rejectCallFromNotification">✕ Отклонить</button>
+            </div>
+        </div>
+    </div>
+    
+    {% block scripts %}{% endblock %}
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        // Глобальная система уведомлений о звонках
+        let globalSocket = null;
+        let currentIncomingCall = null;
+        
+        // Инициализация глобального Socket.IO для уведомлений
+        {% if session.get('user_id') %}
+        document.addEventListener('DOMContentLoaded', function() {
+            globalSocket = io();
+            
+            globalSocket.on('connect', () => {
+                console.log('Global socket connected for notifications');
+            });
+            
+            // Обработка входящего звонка
+            globalSocket.on('incoming_call', function(data) {
+                currentIncomingCall = data;
+                showIncomingCallNotification(data);
+            });
+            
+            // Обработка завершения звонка
+            globalSocket.on('call_ended', function(data) {
+                hideIncomingCallNotification();
+            });
+            
+            // Обработка отклонения звонка
+            globalSocket.on('call_rejected', function(data) {
+                hideIncomingCallNotification();
+            });
+        });
+        
+        // Показать уведомление о входящем звонке
+        function showIncomingCallNotification(data) {
+            const notification = document.getElementById('incomingCallNotification');
+            const subtitle = document.getElementById('callNotificationFrom');
+            
+            if (notification && subtitle) {
+                subtitle.textContent = `Чат #${data.chat_id}`;
+                notification.classList.remove('hidden');
+                
+                // Автоматически скрыть через 30 секунд, если не ответили
+                setTimeout(() => {
+                    if (currentIncomingCall && currentIncomingCall.call_id === data.call_id) {
+                        hideIncomingCallNotification();
+                    }
+                }, 30000);
+            }
+        }
+        
+        // Скрыть уведомление
+        function hideIncomingCallNotification() {
+            const notification = document.getElementById('incomingCallNotification');
+            if (notification) {
+                notification.classList.add('hidden');
+            }
+            currentIncomingCall = null;
+        }
+        
+        // Принять звонок из уведомления
+        document.addEventListener('DOMContentLoaded', function() {
+            const acceptBtn = document.getElementById('acceptCallFromNotification');
+            const rejectBtn = document.getElementById('rejectCallFromNotification');
+            
+            if (acceptBtn) {
+                acceptBtn.addEventListener('click', function() {
+                    if (currentIncomingCall) {
+                        window.location.href = `/voice/call/${currentIncomingCall.chat_id}`;
+                    }
+                });
+            }
+            
+            if (rejectBtn) {
+                rejectBtn.addEventListener('click', function() {
+                    if (currentIncomingCall && globalSocket) {
+                        globalSocket.emit('call_answer', {
+                            call_id: currentIncomingCall.call_id,
+                            answer: 'reject'
+                        });
+                    }
+                    hideIncomingCallNotification();
+                });
+            }
+        });
+        {% endif %}
+        
+        // Загрузка активного маршрута для всех ролей
+        {% if session.get('user_id') %}
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/api/dispatches/active', {
+                    credentials: 'same-origin'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.dispatch) {
+                        const routeLink = document.getElementById('routeLink');
+                        if (routeLink) {
+                            routeLink.href = `/route/${data.dispatch.id}`;
+                            routeLink.style.display = 'inline-block';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading active dispatch:', error);
+            }
+        });
+        {% endif %}
+        
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const navLinks = document.getElementById('navLinks');
+            
+            if (mobileMenuToggle && navLinks) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    navLinks.classList.toggle('active');
+                    mobileMenuToggle.textContent = navLinks.classList.contains('active') ? '✕' : '☰';
+                });
+                
+                // Close menu when clicking on a link
+                const links = navLinks.querySelectorAll('a');
+                links.forEach(link => {
+                    link.addEventListener('click', function() {
+                        navLinks.classList.remove('active');
+                        mobileMenuToggle.textContent = '☰';
+                    });
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!navLinks.contains(event.target) && !mobileMenuToggle.contains(event.target)) {
+                        navLinks.classList.remove('active');
+                        mobileMenuToggle.textContent = '☰';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+

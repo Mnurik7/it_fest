@@ -1,0 +1,514 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль - HelpDesk{% endblock %}
+
+{% block extra_head %}
+<style>
+    .profile-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, #8B1E2D 0%, #A02D3F 100%);
+        border-radius: 16px;
+        padding: 2.5rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 16px rgba(139, 30, 45, 0.2);
+    }
+
+    .profile-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .profile-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+    }
+
+    .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid #E5E7EB;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-card-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-card-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #8B1E2D;
+        margin: 0.5rem 0;
+    }
+
+    .stat-card-label {
+        font-size: 0.9rem;
+        color: #6B7280;
+        margin: 0;
+    }
+
+    .profile-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #E5E7EB;
+    }
+
+    .profile-tab {
+        padding: 1rem 2rem;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #6B7280;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        bottom: -2px;
+    }
+
+    .profile-tab.active {
+        color: #8B1E2D;
+        border-bottom-color: #8B1E2D;
+    }
+
+    .profile-tab:hover {
+        color: #8B1E2D;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .history-item {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid #E5E7EB;
+        transition: all 0.3s ease;
+    }
+
+    .history-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        border-color: #8B1E2D;
+    }
+
+    .history-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .history-item-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1F2937;
+        margin: 0;
+    }
+
+    .history-item-meta {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #6B7280;
+    }
+
+    .history-item-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-open {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+
+    .badge-resolved {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+
+    .badge-pending {
+        background: #DBEAFE;
+        color: #1E40AF;
+    }
+
+    .history-item-content {
+        color: #4B5563;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    .history-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid #F3F4F6;
+    }
+
+    .history-item-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: #8B1E2D;
+        color: white;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: #7A1A28;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(139, 30, 45, 0.3);
+    }
+
+    .btn-secondary {
+        background: #F3F4F6;
+        color: #4B5563;
+        border: 1px solid #E5E7EB;
+    }
+
+    .btn-secondary:hover {
+        background: #E5E7EB;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #9CA3AF;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: #6B7280;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .empty-state p {
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .chat-preview {
+        background: #F9FAFB;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .chat-message {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #E5E7EB;
+    }
+
+    .chat-message:last-child {
+        border-bottom: none;
+    }
+
+    .chat-message-user {
+        font-weight: 600;
+        color: #8B1E2D;
+    }
+
+    .chat-message-assistant {
+        color: #4B5563;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>
+            <span>👤</span>
+            Профиль пользователя
+        </h1>
+        <p>{{ username }}</p>
+    </div>
+
+    <div class="profile-stats" id="profileStats">
+        <div class="stat-card">
+            <div class="stat-card-icon">📋</div>
+            <div class="stat-card-value" id="totalTickets">0</div>
+            <div class="stat-card-label">Всего запросов</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon">💬</div>
+            <div class="stat-card-value" id="totalChats">0</div>
+            <div class="stat-card-label">Чатов</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon">✅</div>
+            <div class="stat-card-value" id="resolvedTickets">0</div>
+            <div class="stat-card-label">Решено</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon">⏳</div>
+            <div class="stat-card-value" id="pendingTickets">0</div>
+            <div class="stat-card-label">В обработке</div>
+        </div>
+    </div>
+
+    <div class="profile-tabs">
+        <button class="profile-tab active" onclick="switchTab('tickets')">📋 Запросы</button>
+        <button class="profile-tab" onclick="switchTab('chats')">💬 История чатов</button>
+    </div>
+
+    <div id="ticketsTab" class="tab-content active">
+        <div class="history-list" id="ticketsList">
+            <div class="empty-state">
+                <div class="empty-state-icon">⏳</div>
+                <h3>Загрузка...</h3>
+            </div>
+        </div>
+    </div>
+
+    <div id="chatsTab" class="tab-content">
+        <div class="history-list" id="chatsList">
+            <div class="empty-state">
+                <div class="empty-state-icon">⏳</div>
+                <h3>Загрузка...</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let profileData = null;
+
+async function loadProfileData() {
+    try {
+        const response = await fetch('/api/profile/history');
+        const data = await response.json();
+        
+        if (data.success) {
+            profileData = data;
+            updateStats(data);
+            renderTickets(data.tickets);
+            renderChatSessions(data.chat_sessions);
+        } else {
+            showError('Ошибка при загрузке данных');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showError('Ошибка при загрузке данных');
+    }
+}
+
+function updateStats(data) {
+    document.getElementById('totalTickets').textContent = data.total_tickets || 0;
+    document.getElementById('totalChats').textContent = data.total_chat_sessions || 0;
+    
+    const resolved = data.tickets.filter(t => t.status === 'resolved').length;
+    const pending = data.tickets.filter(t => t.status === 'open' || t.status === 'pending').length;
+    
+    document.getElementById('resolvedTickets').textContent = resolved;
+    document.getElementById('pendingTickets').textContent = pending;
+}
+
+function renderTickets(tickets) {
+    const container = document.getElementById('ticketsList');
+    
+    if (!tickets || tickets.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <h3>Нет запросов</h3>
+                <p>Вы еще не создавали запросы</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = tickets.map(ticket => {
+        const date = new Date(ticket.created_at).toLocaleString('ru-RU');
+        const statusBadge = getStatusBadge(ticket.status);
+        const department = getDepartmentName(ticket.department);
+        
+        return `
+            <div class="history-item">
+                <div class="history-item-header">
+                    <h3 class="history-item-title">Запрос #${ticket.id} - ${department}</h3>
+                    <div class="history-item-meta">
+                        <span class="history-item-badge ${statusBadge.class}">${statusBadge.text}</span>
+                        <span>${date}</span>
+                    </div>
+                </div>
+                <div class="history-item-content">
+                    <p><strong>Сообщение:</strong> ${ticket.message}</p>
+                    ${ticket.chat_history && ticket.chat_history.length > 0 ? `
+                        <div class="chat-preview">
+                            ${ticket.chat_history.slice(-3).map(msg => `
+                                <div class="chat-message">
+                                    <span class="chat-message-${msg.role}">${msg.role === 'user' ? 'Вы' : 'AI'}:</span>
+                                    ${msg.content.substring(0, 100)}${msg.content.length > 100 ? '...' : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="history-item-footer">
+                    <div class="history-item-actions">
+                        <a href="/operator-chat?ticket_id=${ticket.id}&department=${ticket.department || ''}" class="btn-action btn-primary">
+                            💬 Чат с оператором
+                        </a>
+                    </div>
+                    <span style="font-size: 0.85rem; color: #6B7280;">Приоритет: ${ticket.priority || 'medium'}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderChatSessions(sessions) {
+    const container = document.getElementById('chatsList');
+    
+    if (!sessions || sessions.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">💬</div>
+                <h3>Нет истории чатов</h3>
+                <p>Вы еще не общались в чатах</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = sessions.map(session => {
+        const date = new Date(session.last_updated || session.created_at).toLocaleString('ru-RU');
+        
+        return `
+            <div class="history-item">
+                <div class="history-item-header">
+                    <h3 class="history-item-title">${session.page_name || 'Чат'}</h3>
+                    <div class="history-item-meta">
+                        <span>${date}</span>
+                    </div>
+                </div>
+                <div class="history-item-content">
+                    <p>${session.messages_count || 0} сообщений</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'open': { class: 'badge-open', text: 'Открыт' },
+        'resolved': { class: 'badge-resolved', text: 'Решен' },
+        'pending': { class: 'badge-pending', text: 'В обработке' },
+        'closed': { class: 'badge-resolved', text: 'Закрыт' }
+    };
+    return badges[status] || { class: 'badge-pending', text: status };
+}
+
+function getDepartmentName(department) {
+    const names = {
+        'it_help_desk': 'IT Help Desk',
+        'retail_help_desk': 'Retail Help Desk',
+        'medical_help_desk': 'Medical Help Desk',
+        'legal_help_desk': 'Legal Help Desk',
+        'telecom_help_desk': 'Telecom Help Desk',
+        'auto_help_desk': 'Auto Help Desk',
+        'general_help_desk': 'General Help Desk'
+    };
+    return names[department] || department;
+}
+
+function switchTab(tabName) {
+    // Убираем активный класс со всех вкладок
+    document.querySelectorAll('.profile-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Добавляем активный класс выбранной вкладке
+    event.target.classList.add('active');
+    document.getElementById(tabName + 'Tab').classList.add('active');
+}
+
+function showError(message) {
+    const container = document.getElementById('ticketsList');
+    container.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <h3>Ошибка</h3>
+            <p>${message}</p>
+        </div>
+    `;
+}
+
+// Загружаем данные при загрузке страницы
+loadProfileData();
+</script>
+{% endblock %}
+

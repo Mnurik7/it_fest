@@ -1,0 +1,689 @@
+{% extends "base.html" %}
+
+{% block title %}Мой профиль - AI Help Desk{% endblock %}
+
+{% block extra_head %}
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+main.container {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.profile-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: var(--spacing-xl);
+    min-height: calc(100vh - 80px);
+    box-sizing: border-box;
+}
+
+.profile-header {
+    display: flex;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-xl);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-avatar-section {
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.profile-avatar-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: var(--spacing-md);
+}
+
+.profile-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--color-primary);
+    cursor: pointer;
+    transition: var(--transition);
+    display: block;
+}
+
+.profile-avatar:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+.profile-avatar-placeholder {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    border: 4px solid var(--color-primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.profile-avatar-placeholder:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+.avatar-upload-overlay {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 3px solid var(--color-bg);
+    font-size: 1.25rem;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+}
+
+.avatar-upload-overlay:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.1);
+}
+
+.avatar-upload-input {
+    display: none;
+}
+
+.profile-info-section {
+    flex: 1;
+}
+
+.profile-info-section h1 {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: 2rem;
+    color: var(--color-text);
+}
+
+.profile-info-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1rem;
+}
+
+.profile-info-item strong {
+    min-width: 120px;
+    color: var(--color-text-light);
+}
+
+.profile-info-item span {
+    color: var(--color-text);
+}
+
+.edit-profile-btn {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+.profile-stats-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.profile-stats-section h2 {
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.stat-card-profile {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    text-align: center;
+    transition: var(--transition);
+}
+
+.stat-card-profile:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+
+.stat-value-profile {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-label-profile {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.profile-edit-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+}
+
+.profile-edit-modal-content {
+    background-color: var(--color-bg);
+    margin: 5% auto;
+    padding: var(--spacing-xl);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: var(--shadow-lg);
+}
+
+.profile-edit-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.profile-edit-modal-header h2 {
+    margin: 0;
+}
+
+.profile-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.profile-edit-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.profile-edit-form label {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.profile-edit-form input {
+    padding: var(--spacing-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+}
+
+.profile-edit-form-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.tickets-section-profile {
+    margin-top: var(--spacing-xl);
+}
+
+.tickets-section-profile h2 {
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.5rem;
+}
+
+.filters-container-profile {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Заголовок профиля с фото -->
+    <div class="profile-header">
+        <div class="profile-avatar-section">
+            <div class="profile-avatar-wrapper">
+                {% if user and user.avatar_url %}
+                <img src="{{ user.avatar_url }}" alt="{{ user.username }}" class="profile-avatar" id="profileAvatar" onclick="document.getElementById('avatarUploadInput').click();">
+                {% else %}
+                <div class="profile-avatar-placeholder" onclick="document.getElementById('avatarUploadInput').click();">
+                    👤
+                </div>
+                {% endif %}
+                <div class="avatar-upload-overlay" onclick="document.getElementById('avatarUploadInput').click();" title="Изменить фото">
+                    📷
+                </div>
+                <input type="file" id="avatarUploadInput" class="avatar-upload-input" accept="image/*" onchange="uploadAvatar(event)">
+            </div>
+            <p style="color: var(--color-text-light); font-size: 0.875rem; margin: 0;">Нажмите на фото для загрузки</p>
+        </div>
+        
+        <div class="profile-info-section">
+            <h1>{{ user.username if user else session.get('username') }}</h1>
+            <div class="profile-info-item">
+                <strong>Имя пользователя:</strong>
+                <span id="displayUsername">{{ user.username if user else session.get('username') }}</span>
+            </div>
+            <div class="profile-info-item">
+                <strong>Email:</strong>
+                <span id="displayEmail">{{ user.email if user and user.email else '-' }}</span>
+            </div>
+            <div class="profile-info-item">
+                <strong>Роль:</strong>
+                <span>{{ user.role if user else session.get('role', 'user') }}</span>
+            </div>
+            <div class="profile-info-item">
+                <strong>Дата регистрации:</strong>
+                <span id="displayRegDate">{{ user.created_at.strftime('%d.%m.%Y') if user and user.created_at else '-' }}</span>
+            </div>
+            <button class="btn btn-primary edit-profile-btn" onclick="openEditModal()">
+                ✏️ Редактировать профиль
+            </button>
+        </div>
+    </div>
+    
+    <!-- Статистика -->
+    <div class="profile-stats-section">
+        <h2>📊 Статистика обращений</h2>
+        <div class="stats-grid" id="statsContainer">
+            <div class="stat-card-profile">
+                <div class="stat-value-profile" id="statTotal">-</div>
+                <div class="stat-label-profile">Всего обращений</div>
+            </div>
+            <div class="stat-card-profile">
+                <div class="stat-value-profile" id="statOpen">-</div>
+                <div class="stat-label-profile">Открытых</div>
+            </div>
+            <div class="stat-card-profile">
+                <div class="stat-value-profile" id="statResolved">-</div>
+                <div class="stat-label-profile">Решённых</div>
+            </div>
+            <div class="stat-card-profile">
+                <div class="stat-value-profile" id="statAutoClosed">-</div>
+                <div class="stat-label-profile">Авто-закрыто</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Мои обращения -->
+    <div class="tickets-section-profile">
+        <h2>📋 Мои обращения</h2>
+        
+        <!-- Фильтры -->
+        <div class="filters-container-profile">
+            <label for="filterStatus">Статус:</label>
+            <select id="filterStatus">
+                <option value="">Все</option>
+                <option value="OPEN">Открыт</option>
+                <option value="IN_PROGRESS">В работе</option>
+                <option value="RESOLVED">Решён</option>
+                <option value="AUTO_CLOSED">Авто-закрыт</option>
+            </select>
+            
+            <button class="btn btn-secondary" onclick="loadTickets()">🔄 Обновить</button>
+            <a href="/" class="btn btn-primary">➕ Создать новое обращение</a>
+        </div>
+        
+        <!-- Таблица тикетов -->
+        <div class="table-container">
+            <table class="tickets-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Текст обращения</th>
+                        <th>Категория</th>
+                        <th>Приоритет</th>
+                        <th>Отдел</th>
+                        <th>Статус</th>
+                        <th>Дата создания</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketsTableBody">
+                    <tr>
+                        <td colspan="8" class="loading">Загрузка...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования профиля -->
+<div id="editProfileModal" class="profile-edit-modal">
+    <div class="profile-edit-modal-content">
+        <div class="profile-edit-modal-header">
+            <h2>✏️ Редактировать профиль</h2>
+            <span class="close" onclick="closeEditModal()" style="font-size: 2rem; cursor: pointer; color: var(--color-text-light);">&times;</span>
+        </div>
+        <form id="editProfileForm" class="profile-edit-form" onsubmit="saveProfile(event)">
+            <div class="form-group">
+                <label for="editUsername">Имя пользователя:</label>
+                <input type="text" id="editUsername" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="editEmail">Email:</label>
+                <input type="email" id="editEmail" name="email" required>
+            </div>
+            <div class="profile-edit-form-actions">
+                <button type="submit" class="btn btn-success">
+                    <span id="saveProfileBtnText">💾 Сохранить</span>
+                    <span id="saveProfileBtnLoader" class="loader" style="display: none;"></span>
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">❌ Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно для просмотра тикета -->
+<div id="ticketModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeTicketModal()">&times;</span>
+        <h2>Детали обращения #<span id="modalTicketId"></span></h2>
+        
+        <div class="ticket-details">
+            <div class="detail-row">
+                <strong>Статус:</strong>
+                <span id="modalStatus"></span>
+            </div>
+            <div class="detail-row">
+                <strong>Категория:</strong>
+                <span id="modalCategory"></span>
+            </div>
+            <div class="detail-row">
+                <strong>Приоритет:</strong>
+                <span id="modalPriority"></span>
+            </div>
+            <div class="detail-row">
+                <strong>Отдел:</strong>
+                <span id="modalDepartment"></span>
+            </div>
+            
+            <div class="detail-section">
+                <strong>Ваш текст обращения:</strong>
+                <div class="detail-text" id="modalText"></div>
+            </div>
+            
+            <div class="detail-section">
+                <strong>Резюме (AI):</strong>
+                <div class="detail-text" id="modalSummary"></div>
+            </div>
+            
+            <div class="detail-section" id="adviceSection" style="display: none;">
+                <strong>Совет от ИИ:</strong>
+                <div class="detail-text" id="modalAdvice"></div>
+            </div>
+            
+            <div class="detail-section" id="responseSection" style="display: none;">
+                <strong>Ответ оператора:</strong>
+                <div class="detail-text response-text" id="modalResponse"></div>
+            </div>
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeTicketModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/user_profile.js') }}"></script>
+<script>
+// Инициализация данных профиля
+document.addEventListener('DOMContentLoaded', function() {
+    loadUserInfo();
+});
+
+// Загрузка информации о пользователе
+async function loadUserInfo() {
+    try {
+        const userId = {{ user.id if user else 'null' }};
+        if (!userId) {
+            // Пытаемся получить через API
+            const response = await fetch('/api/user-info', {
+                credentials: 'same-origin'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.user) {
+                    updateProfileDisplay(data.user);
+                }
+            }
+            return;
+        }
+        
+        const response = await fetch(`/api/users/${userId}`, {
+            credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.user) {
+                updateProfileDisplay(data.user);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading user info:', error);
+    }
+}
+
+// Обновление отображения профиля
+function updateProfileDisplay(user) {
+    if (user.username) {
+        document.getElementById('displayUsername').textContent = user.username;
+        document.getElementById('editUsername').value = user.username;
+    }
+    if (user.email) {
+        document.getElementById('displayEmail').textContent = user.email;
+        document.getElementById('editEmail').value = user.email;
+    }
+    if (user.avatar_url) {
+        const avatarImg = document.getElementById('profileAvatar');
+        if (avatarImg) {
+            avatarImg.src = user.avatar_url + '?t=' + Date.now();
+        } else {
+            const placeholder = document.querySelector('.profile-avatar-placeholder');
+            if (placeholder) {
+                placeholder.outerHTML = `<img src="${user.avatar_url}?t=${Date.now()}" alt="Avatar" class="profile-avatar" id="profileAvatar" onclick="document.getElementById('avatarUploadInput').click();">`;
+            }
+        }
+    }
+}
+
+// Загрузка аватара
+async function uploadAvatar(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Проверка размера файла (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Файл слишком большой. Максимальный размер: 5MB');
+        return;
+    }
+    
+    // Проверка типа файла
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        alert('Недопустимый тип файла. Разрешены: PNG, JPG, JPEG, GIF, WEBP');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('avatar', file);
+    
+    try {
+        const response = await fetch('/api/upload-avatar', {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: formData
+        });
+        
+        if (response.status === 401) {
+            alert('Сессия истекла. Пожалуйста, войдите в систему снова.');
+            window.location.href = '/login';
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Обновляем аватар на странице
+            const avatarContainer = document.querySelector('.profile-avatar-wrapper');
+            if (avatarContainer) {
+                const existingImg = avatarContainer.querySelector('.profile-avatar');
+                const existingPlaceholder = avatarContainer.querySelector('.profile-avatar-placeholder');
+                
+                if (existingImg) {
+                    existingImg.src = data.avatar_url + '?t=' + Date.now();
+                } else if (existingPlaceholder) {
+                    existingPlaceholder.outerHTML = `<img src="${data.avatar_url}?t=${Date.now()}" alt="Avatar" class="profile-avatar" id="profileAvatar" onclick="document.getElementById('avatarUploadInput').click();">`;
+                }
+            }
+            
+            alert('✅ Фото профиля успешно загружено!');
+        } else {
+            alert('Ошибка загрузки: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        console.error('Error uploading avatar:', error);
+        alert('Произошла ошибка при загрузке фото');
+    }
+}
+
+// Открытие модального окна редактирования
+function openEditModal() {
+    loadUserInfo();
+    document.getElementById('editProfileModal').style.display = 'block';
+}
+
+// Закрытие модального окна редактирования
+function closeEditModal() {
+    document.getElementById('editProfileModal').style.display = 'none';
+}
+
+// Сохранение профиля
+async function saveProfile(event) {
+    event.preventDefault();
+    
+    const username = document.getElementById('editUsername').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+    
+    if (!username || !email) {
+        alert('Заполните все поля');
+        return;
+    }
+    
+    const saveBtnText = document.getElementById('saveProfileBtnText');
+    const saveBtnLoader = document.getElementById('saveProfileBtnLoader');
+    
+    if (saveBtnText) saveBtnText.style.display = 'none';
+    if (saveBtnLoader) saveBtnLoader.style.display = 'inline-block';
+    
+    try {
+        const response = await fetch('/api/update-profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                username: username,
+                email: email
+            })
+        });
+        
+        if (response.status === 401) {
+            alert('Сессия истекла. Пожалуйста, войдите в систему снова.');
+            window.location.href = '/login';
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Обновляем отображение
+            document.getElementById('displayUsername').textContent = username;
+            document.getElementById('displayEmail').textContent = email;
+            
+            // Обновляем сессию
+            if (data.username) {
+                // Можно обновить через перезагрузку страницы
+                location.reload();
+            } else {
+                closeEditModal();
+                alert('✅ Профиль успешно обновлён!');
+            }
+        } else {
+            alert('Ошибка обновления: ' + (data.error || 'Неизвестная ошибка'));
+        }
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        alert('Произошла ошибка при сохранении профиля');
+    } finally {
+        if (saveBtnText) saveBtnText.style.display = 'inline';
+        if (saveBtnLoader) saveBtnLoader.style.display = 'none';
+    }
+}
+
+// Закрытие модального окна при клике вне его
+window.onclick = function(event) {
+    const editModal = document.getElementById('editProfileModal');
+    const ticketModal = document.getElementById('ticketModal');
+    if (event.target === editModal) {
+        closeEditModal();
+    }
+    if (event.target === ticketModal) {
+        closeTicketModal();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,2602 @@
+{% extends "base.html" %}
+
+{% block title %}AI-Scrum Master - HelpDesk{% endblock %}
+
+{% block content %}
+<div class="section-container">
+    <div class="section-header">
+        <div>
+            <h2>AI-Scrum Master</h2>
+            <p>Цифровой Scrum Master для управления проектами и задачами</p>
+        </div>
+        <div class="status-badge success">
+            <span>📋</span>
+            <span>Система активна</span>
+        </div>
+    </div>
+    
+    <!-- Вкладки -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('projects', this)">📁 Проекты</button>
+        <button class="tab-btn" onclick="switchTab('tasks', this)">✅ Создание задач</button>
+        <button class="tab-btn" onclick="switchTab('sprints', this)">🏃 Спринты</button>
+        <button class="tab-btn" onclick="switchTab('meetings', this)">🤝 Встречи</button>
+        <button class="tab-btn" onclick="switchTab('deadlines', this)">⏰ Дедлайны</button>
+        <button class="tab-btn" onclick="switchTab('analytics', this)">📊 Аналитика</button>
+        <button class="tab-btn" onclick="switchTab('integrations', this)">🔗 Интеграции</button>
+    </div>
+    
+    <!-- Вкладка: Проекты -->
+    <div id="tab-projects" class="tab-content active">
+        <div class="work-area">
+            <div class="section-controls">
+                <button class="btn btn-primary" onclick="showCreateProject()">➕ Создать проект</button>
+                <button class="btn btn-secondary" onclick="loadProjects()">🔄 Обновить</button>
+            </div>
+            
+            <div id="create-project-form" style="display: none;" class="form-card">
+                <h3>Создать проект</h3>
+                <div class="input-section">
+                    <label>Название проекта:</label>
+                    <input type="text" id="project-name" placeholder="Название проекта">
+                </div>
+                <div class="input-section">
+                    <label>Описание:</label>
+                    <textarea id="project-description" rows="3" placeholder="Описание проекта"></textarea>
+                </div>
+                <div class="input-section">
+                    <label>Дедлайн (опционально):</label>
+                    <input type="date" id="project-deadline">
+                </div>
+                <button class="btn btn-primary" onclick="createProject()">Создать</button>
+                <button class="btn btn-secondary" onclick="hideCreateProject()">Отмена</button>
+            </div>
+            
+            <div id="projects-list" class="projects-grid"></div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно просмотра проекта -->
+    <div id="project-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-project-name">Проект</h2>
+                <span class="modal-close" onclick="closeProjectModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="project-details">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Вкладка: Создание задач -->
+    <div id="tab-tasks" class="tab-content">
+        <div class="work-area">
+            <h3>Создание задач из текста</h3>
+            
+            <!-- Информационный блок с кнопкой -->
+            <div style="background: #E0F2FE; border-left: 4px solid #0284C7; padding: 1rem; margin-bottom: 1.5rem; border-radius: 4px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <strong style="color: #0C4A6E; display: block; margin-bottom: 0.5rem;">🤖 Автозаполнение полей через AI</strong>
+                        <p style="color: #075985; margin: 0; font-size: 0.9rem;">Введите текст и нажмите кнопку ниже, чтобы AI автоматически заполнил все поля задачи</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="fillTaskFieldsWithAI()" id="fill-fields-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; white-space: nowrap;">
+                        <span>🤖</span>
+                        <span>Заполнить поля AI</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="input-section">
+                <label>Выберите проект:</label>
+                <select id="task-project-select" onchange="loadProjectForTasks()">
+                    <option value="">-- Выберите проект --</option>
+                </select>
+            </div>
+            <div class="input-section">
+                <label>Текст (ТЗ, описание, переписка, встречи):</label>
+                <textarea id="task-text" rows="10" placeholder="Вставьте текст для анализа и создания задач:
+- Техническое задание
+- Описание проекта
+- Переписка
+- Транскрипт встречи
+- Любой текст с требованиями"></textarea>
+            </div>
+            <div class="input-section" style="margin-top: 1rem;">
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="fillTaskFieldsWithAI()" id="fill-fields-btn-2" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600;">
+                        <span>🤖</span>
+                        <span>Заполнить поля AI</span>
+                    </button>
+                    <span style="color: #666; font-size: 0.9rem;">или</span>
+                    <button class="btn btn-secondary" onclick="createTasksFromText()" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; font-size: 1rem;">
+                        <span>🚀</span>
+                        <span>Создать задачи из текста</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Форма с полями задачи -->
+            <div id="task-fields-form" class="form-card" style="display: none; margin-top: 1.5rem;">
+                <h3>Поля задачи</h3>
+                <div class="input-section">
+                    <label>Название задачи:</label>
+                    <input type="text" id="task-title" placeholder="Название задачи">
+                </div>
+                <div class="input-section">
+                    <label>Описание:</label>
+                    <textarea id="task-description" rows="5" placeholder="Детальное описание задачи"></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-section">
+                        <label>Тип задачи:</label>
+                        <select id="task-type">
+                            <option value="development">Разработка</option>
+                            <option value="testing">Тестирование</option>
+                            <option value="documentation">Документация</option>
+                            <option value="design">Дизайн</option>
+                            <option value="other">Другое</option>
+                        </select>
+                    </div>
+                    <div class="input-section">
+                        <label>Приоритет:</label>
+                        <select id="task-priority">
+                            <option value="low">Низкий</option>
+                            <option value="medium" selected>Средний</option>
+                            <option value="high">Высокий</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div class="input-section">
+                        <label>Story Points:</label>
+                        <input type="number" id="task-story-points" min="1" max="13" value="3">
+                    </div>
+                    <div class="input-section">
+                        <label>Оценка часов:</label>
+                        <input type="number" id="task-estimated-hours" min="1" max="40" value="8">
+                    </div>
+                    <div class="input-section">
+                        <label>Сложность:</label>
+                        <select id="task-complexity">
+                            <option value="low">Низкая</option>
+                            <option value="medium" selected>Средняя</option>
+                            <option value="high">Высокая</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-section">
+                        <label>Исполнитель:</label>
+                        <input type="text" id="task-assignee" placeholder="Имя исполнителя (опционально)">
+                    </div>
+                    <div class="input-section">
+                        <label>Дедлайн:</label>
+                        <input type="date" id="task-deadline">
+                    </div>
+                </div>
+                <div class="input-section">
+                    <label>Критерии приёмки (каждый с новой строки):</label>
+                    <textarea id="task-acceptance-criteria" rows="3" placeholder="Критерий 1&#10;Критерий 2&#10;Критерий 3"></textarea>
+                </div>
+                <div class="input-section">
+                    <label>Definition of Done (каждый с новой строки):</label>
+                    <textarea id="task-definition-of-done" rows="3" placeholder="Критерий 1&#10;Критерий 2&#10;Критерий 3"></textarea>
+                </div>
+                <div class="input-section">
+                    <label>Заметки:</label>
+                    <textarea id="task-notes" rows="2" placeholder="Дополнительные заметки"></textarea>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <button class="btn btn-secondary" onclick="createSingleTaskFromFields()" id="create-single-task-btn" style="display: none;">💾 Сохранить задачу</button>
+            </div>
+            
+            <div id="tasks-result" style="display: none;" class="result-section">
+                <h3>Созданные задачи:</h3>
+                <div id="tasks-preview" class="result-box"></div>
+                <button class="btn btn-primary" onclick="confirmTasks()">✅ Подтвердить и сохранить</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Вкладка: Спринты -->
+    <div id="tab-sprints" class="tab-content">
+        <div class="work-area">
+            <div class="section-controls">
+                <button class="btn btn-primary" onclick="showCreateSprint()">➕ Создать спринт</button>
+                <button class="btn btn-secondary" onclick="loadSprints()">🔄 Обновить</button>
+            </div>
+            
+            <div id="create-sprint-form" style="display: none;" class="form-card">
+                <h3>Создать спринт</h3>
+                <div class="input-section">
+                    <label>Проект:</label>
+                    <select id="sprint-project-select"></select>
+                </div>
+                <div class="input-section">
+                    <label>Название спринта:</label>
+                    <input type="text" id="sprint-name" placeholder="Sprint 1">
+                </div>
+                <div class="input-section">
+                    <label>Дата начала:</label>
+                    <input type="date" id="sprint-start">
+                </div>
+                <div class="input-section">
+                    <label>Дата окончания:</label>
+                    <input type="date" id="sprint-end">
+                </div>
+                <div class="input-section">
+                    <label>Цель спринта:</label>
+                    <textarea id="sprint-goal" rows="2" placeholder="Цель спринта"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="createSprint()">Создать</button>
+                <button class="btn btn-secondary" onclick="hideCreateSprint()">Отмена</button>
+            </div>
+            
+            <div id="sprints-list" class="sprints-list"></div>
+        </div>
+    </div>
+    
+    <!-- Вкладка: Встречи -->
+    <div id="tab-meetings" class="tab-content">
+        <div class="work-area">
+            <h3>Анализ встреч</h3>
+            <div class="input-section">
+                <label>Тип встречи:</label>
+                <select id="meeting-type">
+                    <option value="standup">Stand-up</option>
+                    <option value="grooming">Grooming</option>
+                    <option value="demo">Demo</option>
+                    <option value="planning">Planning</option>
+                    <option value="retrospective">Retrospective</option>
+                </select>
+            </div>
+            <div class="input-section">
+                <label>Проект:</label>
+                <select id="meeting-project-select"></select>
+            </div>
+            <div class="input-section">
+                <label>Участники (через запятую):</label>
+                <input type="text" id="meeting-participants" placeholder="Иван, Мария, Петр">
+            </div>
+            <div class="input-section">
+                <label>Транскрипт встречи:</label>
+                <textarea id="meeting-transcript" rows="10" placeholder="Вставьте транскрипт встречи или описание обсуждения"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="analyzeMeeting()">🔍 Анализировать встречу</button>
+            
+            <div class="section-controls" style="margin-top: 1rem;">
+                <button class="btn btn-secondary" onclick="loadMeetings()">📜 История встреч</button>
+            </div>
+            
+            <div id="meeting-result" style="display: none;" class="result-section">
+                <h3>Результат анализа:</h3>
+                <div id="meeting-analysis" class="result-box"></div>
+                <button class="btn btn-primary" onclick="generateMeetingReport()">📄 Сгенерировать отчёт</button>
+                <div id="meeting-report" class="result-box" style="display: none; margin-top: 1rem;"></div>
+            </div>
+            
+            <div id="meetings-history" class="result-section" style="display: none;">
+                <h3>История встреч:</h3>
+                <div id="meetings-list" class="result-box"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Вкладка: Дедлайны -->
+    <div id="tab-deadlines" class="tab-content">
+        <div class="work-area">
+            <h3>Контроль дедлайнов</h3>
+            <div class="section-controls">
+                <button class="btn btn-primary" onclick="checkDeadlines()">🔍 Проверить дедлайны</button>
+                <button class="btn btn-secondary" onclick="getReminders()">🔔 Напоминания</button>
+                <button class="btn btn-secondary" onclick="analyzeDeadlineRisks()">⚠️ Анализ рисков</button>
+                <button class="btn btn-secondary" onclick="showAddDeadline()">➕ Добавить дедлайн</button>
+            </div>
+            
+            <div id="add-deadline-form" style="display: none;" class="form-card">
+                <h3>Добавить дедлайн</h3>
+                <div class="input-section">
+                    <label>Проект:</label>
+                    <select id="deadline-project-select"></select>
+                </div>
+                <div class="input-section">
+                    <label>Задача (ID):</label>
+                    <input type="text" id="deadline-task-id" placeholder="TASK-1">
+                </div>
+                <div class="input-section">
+                    <label>Исполнитель:</label>
+                    <input type="text" id="deadline-assignee" placeholder="username">
+                </div>
+                <div class="input-section">
+                    <label>Дедлайн:</label>
+                    <input type="date" id="deadline-date">
+                </div>
+                <div class="input-section">
+                    <label>Приоритет:</label>
+                    <select id="deadline-priority">
+                        <option value="low">Низкий</option>
+                        <option value="medium" selected>Средний</option>
+                        <option value="high">Высокий</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="addDeadline()">Добавить</button>
+                <button class="btn btn-secondary" onclick="hideAddDeadline()">Отмена</button>
+            </div>
+            
+            <div id="deadlines-result" class="result-section"></div>
+        </div>
+    </div>
+    
+    <!-- Вкладка: Аналитика -->
+    <div id="tab-analytics" class="tab-content">
+        <div class="work-area">
+            <h3>AI-инсайты и аналитика</h3>
+            <div class="input-section">
+                <label>Проект:</label>
+                <select id="analytics-project-select"></select>
+            </div>
+            <button class="btn btn-primary" onclick="generateInsights()">🧠 Генерировать инсайты</button>
+            
+            <div id="analytics-result" class="result-section"></div>
+        </div>
+    </div>
+    
+    <!-- Вкладка: Интеграции -->
+    <div id="tab-integrations" class="tab-content">
+        <div class="work-area">
+            <h3>🔗 Интеграции</h3>
+            <p style="color: #6B7280; margin-bottom: 2rem;">Настройте подключение к внешним системам для автоматической синхронизации задач</p>
+            
+            <!-- Google Meet интеграция -->
+            <div class="integration-card">
+                <div class="integration-header">
+                    <div class="integration-icon">📹</div>
+                    <div>
+                        <h4>Google Meet</h4>
+                        <p>Подключение к звонкам и автоматическая транскрибация</p>
+                    </div>
+                    <div id="google-meet-status-badge" class="status-badge">
+                        <span>⚪</span>
+                        <span>Не настроено</span>
+                    </div>
+                </div>
+                
+                <div id="google-meet-settings-form" class="integration-form">
+                    <!-- Предупреждение о библиотеках -->
+                    <div id="google-meet-libraries-warning" style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; display: none;">
+                        <strong style="color: #92400E; display: block; margin-bottom: 0.5rem;">⚠️ Требуется установка библиотек</strong>
+                        <p style="color: #78350F; margin: 0.5rem 0; font-size: 0.9rem;">
+                            Для работы Google Meet интеграции необходимо установить библиотеки Python.
+                        </p>
+                        <code style="background: white; padding: 0.5rem; border-radius: 4px; display: block; margin-top: 0.5rem; font-size: 0.85rem;">
+                            pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+                        </code>
+                        <p style="color: #78350F; margin: 0.5rem 0 0 0; font-size: 0.85rem;">
+                            Или используйте скрипт: <code style="background: white; padding: 2px 4px; border-radius: 3px;">install_dependencies.bat</code>
+                        </p>
+                    </div>
+                    
+                    <!-- Подробная инструкция по использованию -->
+                    <div style="background: linear-gradient(135deg, #E0F2FE 0%, #DBEAFE 100%); border-left: 4px solid #0284C7; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                            <span style="font-size: 1.5rem;">📖</span>
+                            <strong style="color: #0C4A6E; font-size: 1.1rem;">Как использовать Google Meet интеграцию</strong>
+                        </div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <strong style="color: #075985; display: block; margin-bottom: 0.75rem; font-size: 1rem;">🔧 Быстрая настройка (2 шага)</strong>
+                            <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <div style="margin-bottom: 1rem;">
+                                    <strong style="color: #0284C7; display: block; margin-bottom: 0.5rem;">1️⃣ Получите ключи в Google Cloud Console</strong>
+                                    <div style="color: #075985; font-size: 0.9rem; line-height: 1.6;">
+                                        • Откройте <a href="https://console.cloud.google.com/" target="_blank" style="color: #0284C7; text-decoration: underline; font-weight: 600;">Google Cloud Console</a><br>
+                                        • Включите <strong>Google Meet API</strong> (APIs & Services → Library → "Google Meet API" → Enable)<br>
+                                        • Настройте <strong>OAuth consent screen</strong> (APIs & Services → OAuth consent screen → выберите "External" или "Internal")<br>
+                                        • Создайте <strong>OAuth 2.0 Client ID</strong> (APIs & Services → Credentials → "+ CREATE CREDENTIALS" → "OAuth client ID" → "Web application")<br>
+                                        • Добавьте Redirect URI: <code style="background: #F3F4F6; padding: 2px 6px; border-radius: 3px; font-family: monospace; font-size: 0.85rem;">http://localhost:5000/api/ai-scrum/integrations/google-meet/callback</code><br>
+                                        • <strong>Важно:</strong> Если приложение в режиме тестирования, добавьте тестовых пользователей в OAuth consent screen → Test users<br>
+                                        • Скопируйте <strong>Client ID</strong> и <strong>Client Secret</strong>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <strong style="color: #0284C7; display: block; margin-bottom: 0.5rem;">2️⃣ Введите данные в форму ниже</strong>
+                                    <div style="color: #075985; font-size: 0.9rem; line-height: 1.6;">
+                                        • Вставьте Client ID и Client Secret в поля ниже<br>
+                                        • Нажмите "Тестировать подключение" → "Сохранить настройки"<br>
+                                        • Готово! Теперь можно запускать встречи с AI-ассистентом
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #F0F9FF; padding: 1rem; border-radius: 6px; border: 1px solid #BAE6FD; margin-bottom: 1rem;">
+                            <strong style="color: #075985; display: block; margin-bottom: 0.5rem; font-size: 0.95rem;">✨ Что умеет интеграция:</strong>
+                            <div style="color: #075985; font-size: 0.9rem; line-height: 1.6;">
+                                ✓ Автоматическая транскрибация встреч<br>
+                                ✓ AI задаёт уточняющие вопросы во время звонка<br>
+                                ✓ AI отвечает на вопросы участников в реальном времени
+                            </div>
+                        </div>
+                        
+                        <div style="background: #FEF3C7; padding: 1rem; border-radius: 6px; border: 1px solid #F59E0B; border-left: 4px solid #F59E0B;">
+                            <strong style="color: #92400E; display: block; margin-bottom: 0.5rem; font-size: 0.95rem;">⚠️ Важно: Тестовые пользователи</strong>
+                            <div style="color: #78350F; font-size: 0.9rem; line-height: 1.6;">
+                                Если приложение в режиме тестирования, добавьте email пользователей в <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" style="color: #0284C7; text-decoration: underline; font-weight: 600;">OAuth consent screen → Test users</a>.<br>
+                                Иначе при авторизации будет ошибка "Доступ заблокирован".
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-section">
+                        <label>Client ID:</label>
+                        <input type="text" id="google-meet-client-id" placeholder="your-client-id.apps.googleusercontent.com">
+                        <small style="color: #6B7280; display: block; margin-top: 0.5rem;">
+                            OAuth 2.0 Client ID из Google Cloud Console (формат: xxxx.apps.googleusercontent.com)
+                        </small>
+                    </div>
+                    
+                    <div class="input-section">
+                        <label>Client Secret:</label>
+                        <input type="password" id="google-meet-client-secret" placeholder="Введите Client Secret">
+                        <small style="color: #6B7280; display: block; margin-top: 0.5rem;">
+                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color: #0284C7; text-decoration: underline;">
+                                📘 Открыть Google Cloud Console для получения credentials →
+                            </a>
+                        </small>
+                    </div>
+                    
+                    <div class="input-section">
+                        <label>Redirect URI:</label>
+                        <input type="url" id="google-meet-redirect-uri" placeholder="http://localhost:5000/api/ai-scrum/integrations/google-meet/callback" value="http://localhost:5000/api/ai-scrum/integrations/google-meet/callback">
+                        <small style="color: #6B7280; display: block; margin-top: 0.5rem;">
+                            ⚠️ Этот URI должен быть добавлен в Google Cloud Console в настройках OAuth 2.0 Client
+                        </small>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" onclick="testGoogleMeetConnection()" id="google-meet-test-btn">
+                            <span>🔍</span>
+                            <span>Тестировать подключение</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="saveGoogleMeetSettings()" id="google-meet-save-btn">
+                            <span>💾</span>
+                            <span>Сохранить настройки</span>
+                        </button>
+                        <button class="btn btn-success" onclick="authorizeGoogleMeet()" id="google-meet-authorize-btn" style="background: #10B981; border-color: #10B981;">
+                            <span>🔐</span>
+                            <span>Авторизоваться</span>
+                        </button>
+                    </div>
+                    
+                    <div id="google-meet-test-result" style="margin-top: 1rem;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* AI-Scrum Master Modern Design */
+.section-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #E8E8E8;
+}
+
+.section-header h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #8B1E2D;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.5px;
+}
+
+.section-header p {
+    font-size: 1.1rem;
+    color: #6B7280;
+    margin: 0;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.status-badge.success {
+    background: #D1FAE5;
+    color: #059669;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2.5rem;
+    border-bottom: 2px solid #E8E8E8;
+    padding-bottom: 0;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 0.875rem 1.75rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #6B7280;
+    transition: all 0.2s ease;
+    position: relative;
+    margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+    color: #8B1E2D;
+    background: #FEF2F2;
+    border-radius: 8px 8px 0 0;
+}
+
+.tab-btn.active {
+    color: #8B1E2D;
+    border-bottom-color: #8B1E2D;
+    font-weight: 600;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Work Area */
+.work-area {
+    background: #FFFFFF;
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid #E8E8E8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.work-area h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2D2D2D;
+    margin: 0 0 1.5rem 0;
+}
+
+.section-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+/* Forms */
+.form-card {
+    background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
+    padding: 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    border: 1px solid #E8E8E8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.form-card h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #8B1E2D;
+    margin: 0 0 1.5rem 0;
+}
+
+.input-section {
+    margin-bottom: 1.5rem;
+}
+
+.input-section label {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2D2D2D;
+    margin-bottom: 0.75rem;
+}
+
+.input-section input[type="text"],
+.input-section input[type="date"],
+.input-section textarea,
+.input-section select {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #E8E8E8;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background: #FAFAFA;
+    box-sizing: border-box;
+}
+
+.input-section input[type="text"]:focus,
+.input-section input[type="date"]:focus,
+.input-section textarea:focus,
+.input-section select:focus {
+    outline: none;
+    border-color: #8B1E2D;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(139, 30, 45, 0.1);
+}
+
+.input-section textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* Buttons */
+.btn {
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: #8B1E2D;
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(139, 30, 45, 0.3);
+}
+
+.btn-primary:hover {
+    background: #7A1A28;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(139, 30, 45, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    background: #F4F5F7;
+    color: #2D2D2D;
+    border: 2px solid #E8E8E8;
+}
+
+.btn-secondary:hover {
+    background: #E8E9EB;
+    border-color: #D1D5DB;
+}
+
+/* Projects Grid */
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.project-card {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%);
+    padding: 1.75rem;
+    border-radius: 16px;
+    border: 1px solid #E8E8E8;
+    border-left: 4px solid #8B1E2D;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.project-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(139, 30, 45, 0.15);
+    border-color: #8B1E2D;
+}
+
+.project-card h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #8B1E2D;
+}
+
+.project-card p {
+    margin: 0.5rem 0;
+    color: #4A4A4A;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Sprints & Tasks Lists */
+.sprints-list {
+    margin-top: 2rem;
+}
+
+.sprint-card,
+.sprint-item {
+    background: #FFFFFF;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    border: 1px solid #E8E8E8;
+    border-left: 4px solid #8B1E2D;
+    transition: all 0.2s ease;
+}
+
+.sprint-card:hover,
+.sprint-item:hover {
+    border-color: #8B1E2D;
+    box-shadow: 0 4px 12px rgba(139, 30, 45, 0.1);
+}
+
+.task-item {
+    background: #FFFFFF;
+    padding: 1.25rem;
+    margin: 0.75rem 0;
+    border-radius: 12px;
+    border: 1px solid #E8E8E8;
+    border-left: 3px solid #8B1E2D;
+    transition: all 0.2s ease;
+}
+
+.task-item:hover {
+    background: #FAFAFA;
+    border-color: #8B1E2D;
+}
+
+.epic-card {
+    background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin: 1.5rem 0;
+    border: 1px solid #BAE6FD;
+    border-left: 4px solid #0EA5E9;
+}
+
+.epic-card h4 {
+    color: #0C4A6E;
+    margin: 0 0 0.75rem 0;
+}
+
+.user-story-card {
+    background: #F9FAFB;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 0.75rem 0;
+    margin-left: 1.5rem;
+    border: 1px solid #E5E7EB;
+    border-left: 3px solid #6B7280;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+    background-color: #FFFFFF;
+    margin: 3% auto;
+    padding: 0;
+    border: none;
+    width: 90%;
+    max-width: 1200px;
+    border-radius: 16px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    padding: 2rem;
+    background: linear-gradient(135deg, #8B1E2D 0%, #7A1A28 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    color: white;
+    font-size: 32px;
+    font-weight: 300;
+    cursor: pointer;
+    line-height: 1;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.project-detail-section {
+    margin-bottom: 2rem;
+    padding: 1.75rem;
+    background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
+    border-radius: 12px;
+    border: 1px solid #E8E8E8;
+}
+
+.project-detail-section h3 {
+    margin: 0 0 1.25rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #8B1E2D;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #8B1E2D;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-card {
+    background: #FFFFFF;
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #E8E8E8;
+    border-left: 4px solid #8B1E2D;
+    transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(139, 30, 45, 0.15);
+}
+
+.stat-card .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #8B1E2D;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .stat-label {
+    color: #6B7280;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.team-member-card {
+    background: #FFFFFF;
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin: 0.75rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #E8E8E8;
+    transition: all 0.2s ease;
+}
+
+.team-member-card:hover {
+    border-color: #8B1E2D;
+    box-shadow: 0 4px 12px rgba(139, 30, 45, 0.1);
+}
+
+.role-badge {
+    padding: 0.375rem 0.875rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-left: 0.75rem;
+}
+
+.role-developer { background: #DBEAFE; color: #1E40AF; }
+.role-analyst { background: #F3E8FF; color: #6B21A8; }
+.role-po { background: #D1FAE5; color: #065F46; }
+.role-scrum_master { background: #FEF3C7; color: #92400E; }
+.role-manager { background: #FCE7F3; color: #9F1239; }
+
+.task-list-item {
+    background: #FFFFFF;
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin: 0.75rem 0;
+    border: 1px solid #E8E8E8;
+    border-left: 3px solid #8B1E2D;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.task-list-item:hover {
+    background: #FAFAFA;
+    border-color: #8B1E2D;
+    box-shadow: 0 4px 12px rgba(139, 30, 45, 0.1);
+}
+
+.task-list-item strong {
+    color: #2D2D2D;
+    font-size: 1rem;
+}
+
+.task-list-item p {
+    margin: 0.25rem 0;
+    color: #6B7280;
+    font-size: 0.9rem;
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-active { background: #D1FAE5; color: #065F46; }
+.status-completed { background: #DBEAFE; color: #1E40AF; }
+.status-planned { background: #FEF3C7; color: #92400E; }
+.status-in_progress { background: #F3E8FF; color: #6B21A8; }
+.status-blocked { background: #FEE2E2; color: #991B1B; }
+
+/* Интеграции */
+.integration-card {
+    background: #FFFFFF;
+    border: 1px solid #E8E8E8;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.integration-card:hover {
+    box-shadow: 0 4px 12px rgba(139, 30, 45, 0.1);
+    border-color: #8B1E2D;
+}
+
+.integration-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #E8E8E8;
+}
+
+.integration-icon {
+    font-size: 2rem;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.integration-header > div:nth-child(2) {
+    flex: 1;
+}
+
+.integration-header h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2D2D2D;
+    margin: 0 0 0.25rem 0;
+}
+
+.integration-header p {
+    font-size: 0.9rem;
+    color: #6B7280;
+    margin: 0;
+}
+
+.integration-form {
+    margin-top: 1rem;
+}
+
+.integration-form .input-section {
+    margin-bottom: 1.5rem;
+}
+
+.integration-form input[type="url"],
+.integration-form input[type="text"],
+.integration-form input[type="password"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.integration-form input:focus {
+    outline: none;
+    border-color: #8B1E2D;
+    box-shadow: 0 0 0 3px rgba(139, 30, 45, 0.1);
+}
+
+.status-badge.success {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.status-badge.error {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.status-badge.warning {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+/* Results */
+.result-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: #FAFAFA;
+    border-radius: 12px;
+    border-left: 4px solid #8B1E2D;
+}
+
+.result-section h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #8B1E2D;
+    margin: 0 0 1rem 0;
+}
+
+.result-box {
+    background: #FFFFFF;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #E8E8E8;
+    margin-top: 1rem;
+    line-height: 1.6;
+    color: #2D2D2D;
+}
+
+.result-box h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2D2D2D;
+    margin: 1rem 0 0.5rem 0;
+}
+
+.result-box h4:first-child {
+    margin-top: 0;
+}
+
+.result-box p {
+    margin: 0.5rem 0;
+    color: #4A4A4A;
+}
+
+.result-box ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.result-box li {
+    margin: 0.5rem 0;
+    color: #4A4A4A;
+}
+
+/* Spinner */
+.spinner {
+    border: 3px solid #F3F4F6;
+    border-top: 3px solid #8B1E2D;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .section-container {
+        padding: 1rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .projects-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tabs {
+        flex-wrap: wrap;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+
+<script>
+let currentProjects = [];
+let currentTasksData = null;
+let currentMeetingAnalysis = null;
+let currentProjectId = null;
+
+function switchTab(tabName, buttonElement) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    
+    const targetTab = document.getElementById(`tab-${tabName}`);
+    if (targetTab) {
+        targetTab.classList.add('active');
+    }
+    
+    if (buttonElement) {
+        buttonElement.classList.add('active');
+    }
+    
+    if (tabName === 'projects') {
+        loadProjects();
+    } else if (tabName === 'tasks') {
+        loadProjectsForTasks();
+    } else if (tabName === 'sprints') {
+        loadProjectsForSprints();
+        loadSprints();
+    } else if (tabName === 'meetings') {
+        loadProjectsForMeetings();
+    } else if (tabName === 'deadlines') {
+        checkDeadlines();
+        loadProjectsForDeadlines();
+    } else if (tabName === 'analytics') {
+        loadProjectsForAnalytics();
+    } else if (tabName === 'integrations') {
+        loadGoogleMeetSettings();
+    }
+}
+
+// Проекты
+function showCreateProject() {
+    document.getElementById('create-project-form').style.display = 'block';
+}
+
+function hideCreateProject() {
+    document.getElementById('create-project-form').style.display = 'none';
+}
+
+function createProject() {
+    const name = document.getElementById('project-name').value;
+    const description = document.getElementById('project-description').value;
+    const deadline = document.getElementById('project-deadline').value;
+    
+    if (!name) {
+        alert('Введите название проекта');
+        return;
+    }
+    
+    fetch('/api/ai-scrum/projects/create', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, description, deadline: deadline || null})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            alert('Ошибка: ' + data.error);
+            return;
+        }
+        alert('Проект создан!');
+        hideCreateProject();
+        loadProjects();
+    })
+    .catch(e => alert('Ошибка: ' + e.message));
+}
+
+function loadProjects() {
+    fetch('/api/ai-scrum/projects')
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('projects-list').innerHTML = '<p>Ошибка: ' + data.error + '</p>';
+                return;
+            }
+            currentProjects = data.projects || [];
+            displayProjects(currentProjects);
+        })
+        .catch(e => {
+            document.getElementById('projects-list').innerHTML = '<p>Ошибка: ' + e.message + '</p>';
+        });
+}
+
+function displayProjects(projects) {
+    const container = document.getElementById('projects-list');
+    if (!projects || projects.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 3rem; color: #6B7280;"><p style="font-size: 1.1rem;">Нет проектов. Создайте первый проект.</p></div>';
+        return;
+    }
+    
+    let html = '';
+    projects.forEach(project => {
+        const statusClass = `status-${project.status || 'planned'}`;
+        html += `<div class="project-card">
+            <h4>${project.name}</h4>
+            <p style="color: #6B7280; margin-bottom: 1rem;">${project.description || 'Нет описания'}</p>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                <span class="status-badge ${statusClass}">${project.status || 'planned'}</span>
+                ${project.deadline ? `<span style="font-size: 0.85rem; color: #6B7280;">📅 ${new Date(project.deadline).toLocaleDateString('ru-RU')}</span>` : ''}
+            </div>
+            <p style="font-size: 0.85rem; color: #9CA3AF; margin-bottom: 1rem;">Создан: ${new Date(project.created_at).toLocaleDateString('ru-RU')}</p>
+            <button class="btn btn-primary" onclick="viewProject('${project.project_id}')" style="width: 100%; justify-content: center;">Открыть проект</button>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function viewProject(projectId) {
+    currentProjectId = projectId;
+    const modal = document.getElementById('project-modal');
+    const detailsDiv = document.getElementById('project-details');
+    
+    modal.style.display = 'block';
+    detailsDiv.innerHTML = '<div class="spinner"></div>';
+    
+    fetch(`/api/ai-scrum/projects/${projectId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                detailsDiv.innerHTML = '<p>Ошибка: ' + data.error + '</p>';
+                return;
+            }
+            displayProjectDetails(data);
+        })
+        .catch(e => {
+            detailsDiv.innerHTML = '<p>Ошибка: ' + e.message + '</p>';
+        });
+}
+
+function displayProjectDetails(data) {
+    const project = data.project;
+    const teamMembers = data.team_members || [];
+    const sprints = data.sprints || [];
+    const tasks = data.tasks || [];
+    const stats = data.statistics || {};
+    const risks = data.deadline_risks || {};
+    
+    document.getElementById('modal-project-name').textContent = project.name;
+    
+    let html = '';
+    
+    // Основная информация
+    html += `<div class="project-detail-section">
+        <h3>📋 Информация о проекте</h3>
+        <p><strong>Описание:</strong> ${project.description || 'Нет описания'}</p>
+        <p><strong>Статус:</strong> <span class="status-badge status-${project.status}">${project.status}</span></p>
+        <p><strong>Владелец:</strong> ${project.owner}</p>
+        ${project.deadline ? `<p><strong>Дедлайн:</strong> ${new Date(project.deadline).toLocaleDateString('ru-RU')}</p>` : ''}
+        <p><strong>Создан:</strong> ${new Date(project.created_at).toLocaleDateString('ru-RU')}</p>
+    </div>`;
+    
+    // Статистика
+    html += `<div class="project-detail-section">
+        <h3>📊 Статистика</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">${stats.team_size || 0}</div>
+                <div class="stat-label">Участников</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.sprints_count || 0}</div>
+                <div class="stat-label">Спринтов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.active_sprints || 0}</div>
+                <div class="stat-label">Активных спринтов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.tasks_count || 0}</div>
+                <div class="stat-label">Всего задач</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.completed_tasks || 0}</div>
+                <div class="stat-label">Выполнено</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.in_progress_tasks || 0}</div>
+                <div class="stat-label">В работе</div>
+            </div>
+        </div>
+    </div>`;
+    
+    // Команда
+    html += `<div class="project-detail-section">
+        <h3>👥 Команда (${teamMembers.length})</h3>`;
+    if (teamMembers.length > 0) {
+        teamMembers.forEach(member => {
+            const roleClass = `role-${member.role || 'developer'}`;
+            html += `<div class="team-member-card">
+                <div>
+                    <strong>${member.username}</strong>
+                    <span class="role-badge ${roleClass}">${getRoleName(member.role)}</span>
+                </div>
+                <div>
+                    <span>Загрузка: ${(member.workload * 100).toFixed(0)}%</span>
+                </div>
+            </div>`;
+        });
+    } else {
+        html += '<p>Нет участников в команде</p>';
+    }
+    html += `</div>`;
+    
+    // Спринты
+    html += `<div class="project-detail-section">
+        <h3>🏃 Спринты (${sprints.length})</h3>`;
+    if (sprints.length > 0) {
+        sprints.forEach(sprint => {
+            html += `<div class="sprint-item">
+                <h4>${sprint.name}</h4>
+                <p><strong>Цель:</strong> ${sprint.goal || 'Не указана'}</p>
+                <p><strong>Период:</strong> ${new Date(sprint.start_date).toLocaleDateString('ru-RU')} - ${new Date(sprint.end_date).toLocaleDateString('ru-RU')}</p>
+                <p><strong>Статус:</strong> <span class="status-badge status-${sprint.status}">${sprint.status}</span></p>
+                <p><strong>Задач в спринте:</strong> ${sprint.tasks ? sprint.tasks.length : 0}</p>
+            </div>`;
+        });
+    } else {
+        html += '<p>Нет спринтов</p>';
+    }
+    html += `</div>`;
+    
+    // Задачи
+    html += `<div class="project-detail-section">
+        <h3>✅ Задачи (${tasks.length})</h3>`;
+    if (tasks.length > 0) {
+        tasks.slice(0, 10).forEach(task => {
+            const statusClass = `status-${task.status || 'planned'}`;
+            html += `<div class="task-list-item">
+                <div>
+                    <strong>${task.title || task.task_id}</strong>
+                    <p>${task.description || ''}</p>
+                    ${task.assignee ? `<p><small>Исполнитель: ${task.assignee}</small></p>` : ''}
+                </div>
+                <div>
+                    <span class="status-badge ${statusClass}">${task.status || 'planned'}</span>
+                </div>
+            </div>`;
+        });
+        if (tasks.length > 10) {
+            html += `<p><em>Показано 10 из ${tasks.length} задач</em></p>`;
+        }
+    } else {
+        html += '<p>Нет задач</p>';
+    }
+    html += `</div>`;
+    
+    // Риски дедлайнов
+    if (risks.risks && risks.risks.length > 0) {
+        html += `<div class="project-detail-section">
+            <h3>⚠️ Риски дедлайнов</h3>
+            <p><strong>Всего рисков:</strong> ${risks.total_risks || 0}</p>`;
+        risks.risks.slice(0, 5).forEach(risk => {
+            html += `<div style="background: white; padding: 0.75rem; margin: 0.5rem 0; border-radius: 4px; border-left: 3px solid #f44336;">
+                <strong>${risk.task_id}</strong> - ${risk.severity} риск
+                ${risk.days_left !== undefined ? ` (Осталось дней: ${risk.days_left})` : ''}
+                ${risk.days_overdue !== undefined ? ` (Просрочено на ${risk.days_overdue} дней)` : ''}
+            </div>`;
+        });
+        html += `</div>`;
+    }
+    
+    document.getElementById('project-details').innerHTML = html;
+}
+
+function getRoleName(role) {
+    const roles = {
+        'developer': 'Разработчик',
+        'analyst': 'Аналитик',
+        'po': 'Product Owner',
+        'scrum_master': 'Scrum Master',
+        'manager': 'Менеджер'
+    };
+    return roles[role] || role;
+}
+
+function closeProjectModal() {
+    document.getElementById('project-modal').style.display = 'none';
+}
+
+// Закрытие модального окна при клике вне его
+window.onclick = function(event) {
+    const modal = document.getElementById('project-modal');
+    if (event.target == modal) {
+        closeProjectModal();
+    }
+}
+
+// Создание задач
+function loadProjectsForTasks() {
+    fetch('/api/ai-scrum/projects')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('task-project-select');
+            select.innerHTML = '<option value="">-- Выберите проект --</option>';
+            (data.projects || []).forEach(p => {
+                select.innerHTML += `<option value="${p.project_id}">${p.name}</option>`;
+            });
+        });
+}
+
+function fillTaskFieldsWithAI() {
+    const text = document.getElementById('task-text').value;
+    const projectId = document.getElementById('task-project-select').value;
+    
+    if (!text.trim()) {
+        alert('Пожалуйста, введите текст для анализа');
+        return;
+    }
+    
+    const fillBtn = document.getElementById('fill-fields-btn');
+    const fillBtn2 = document.getElementById('fill-fields-btn-2');
+    const originalText = fillBtn ? fillBtn.innerHTML : '';
+    if (fillBtn) {
+        fillBtn.disabled = true;
+        fillBtn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; border-width: 2px; margin: 0;"></span><span>Заполнение...</span>';
+    }
+    if (fillBtn2) {
+        fillBtn2.disabled = true;
+        fillBtn2.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; border-width: 2px; margin: 0;"></span><span>Заполнение...</span>';
+    }
+    
+    fetch('/api/ai-scrum/tasks/fill-fields', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text, project_id: projectId})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (fillBtn) {
+            fillBtn.disabled = false;
+            fillBtn.innerHTML = originalText;
+        }
+        if (fillBtn2) {
+            fillBtn2.disabled = false;
+            fillBtn2.innerHTML = originalText;
+        }
+        
+        if (data.error) {
+            alert('Ошибка: ' + data.error);
+            return;
+        }
+        
+        // Заполняем поля формы
+        const fields = data.task_fields;
+        document.getElementById('task-title').value = fields.title || '';
+        document.getElementById('task-description').value = fields.description || '';
+        document.getElementById('task-type').value = fields.type || 'other';
+        document.getElementById('task-priority').value = fields.priority || 'medium';
+        document.getElementById('task-story-points').value = fields.story_points || 3;
+        document.getElementById('task-estimated-hours').value = fields.estimated_hours || 8;
+        document.getElementById('task-complexity').value = fields.complexity || 'medium';
+        document.getElementById('task-assignee').value = fields.assignee || '';
+        document.getElementById('task-deadline').value = fields.deadline || '';
+        document.getElementById('task-acceptance-criteria').value = (fields.acceptance_criteria || []).join('\n');
+        document.getElementById('task-definition-of-done').value = (fields.definition_of_done || []).join('\n');
+        document.getElementById('task-notes').value = fields.notes || '';
+        
+        // Показываем форму с полями
+        document.getElementById('task-fields-form').style.display = 'block';
+        document.getElementById('create-single-task-btn').style.display = 'inline-block';
+        
+        // Прокручиваем к форме
+        document.getElementById('task-fields-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    })
+    .catch(e => {
+        if (fillBtn) {
+            fillBtn.disabled = false;
+            fillBtn.innerHTML = originalText;
+        }
+        if (fillBtn2) {
+            fillBtn2.disabled = false;
+            fillBtn2.innerHTML = originalText;
+        }
+        alert('Ошибка: ' + e.message);
+    });
+}
+
+function createSingleTaskFromFields() {
+    const projectId = document.getElementById('task-project-select').value;
+    const title = document.getElementById('task-title').value;
+    const description = document.getElementById('task-description').value;
+    
+    if (!projectId) {
+        alert('Выберите проект');
+        return;
+    }
+    
+    if (!title.trim()) {
+        alert('Введите название задачи');
+        return;
+    }
+    
+    const taskData = {
+        title: title,
+        description: description,
+        type: document.getElementById('task-type').value,
+        priority: document.getElementById('task-priority').value,
+        story_points: parseInt(document.getElementById('task-story-points').value) || 0,
+        estimated_hours: parseInt(document.getElementById('task-estimated-hours').value) || 0,
+        complexity: document.getElementById('task-complexity').value,
+        assignee: document.getElementById('task-assignee').value || null,
+        deadline: document.getElementById('task-deadline').value || null,
+        acceptance_criteria: document.getElementById('task-acceptance-criteria').value.split('\n').filter(c => c.trim()),
+        definition_of_done: document.getElementById('task-definition-of-done').value.split('\n').filter(c => c.trim()),
+        notes: document.getElementById('task-notes').value
+    };
+    
+    // Создаём структуру задач для сохранения
+    const tasksData = {
+        project_id: projectId,
+        tasks: [taskData],
+        user_stories: [],
+        subtasks: []
+    };
+    
+    const saveBtn = document.getElementById('create-single-task-btn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner" style="width: 16px; height: 16px; border-width: 2px; margin: 0;"></span><span>Сохранение...</span>';
+    
+    fetch('/api/ai-scrum/tasks/confirm', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({tasks_data: tasksData})
+    })
+    .then(r => r.json())
+    .then(data => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+        
+        if (data.error) {
+            alert('Ошибка: ' + data.error);
+            return;
+        }
+        
+        alert('Задача успешно создана!');
+        // Очищаем форму
+        document.getElementById('task-fields-form').style.display = 'none';
+        document.getElementById('task-text').value = '';
+        document.getElementById('task-title').value = '';
+        document.getElementById('task-description').value = '';
+        document.getElementById('task-assignee').value = '';
+        document.getElementById('task-deadline').value = '';
+        document.getElementById('task-acceptance-criteria').value = '';
+        document.getElementById('task-definition-of-done').value = '';
+        document.getElementById('task-notes').value = '';
+        document.getElementById('create-single-task-btn').style.display = 'none';
+    })
+    .catch(e => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+        alert('Ошибка: ' + e.message);
+    });
+}
+
+function createTasksFromText() {
+    const text = document.getElementById('task-text').value;
+    const projectId = document.getElementById('task-project-select').value;
+    
+    if (!text || !projectId) {
+        alert('Введите текст и выберите проект');
+        return;
+    }
+    
+    document.getElementById('tasks-result').style.display = 'block';
+    document.getElementById('tasks-preview').innerHTML = '<div class="spinner"></div>';
+    
+    fetch('/api/ai-scrum/tasks/create-from-text', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text, project_id: projectId})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            document.getElementById('tasks-preview').innerHTML = '<p>Ошибка: ' + data.error + '</p>';
+            return;
+        }
+        currentTasksData = data.tasks_data;
+        displayTasksPreview(data.tasks_data);
+    })
+    .catch(e => {
+        document.getElementById('tasks-preview').innerHTML = '<p>Ошибка: ' + e.message + '</p>';
+    });
+}
+
+function displayTasksPreview(tasksData) {
+    let html = '';
+    
+    if (tasksData.epic) {
+        html += `<div class="epic-card">
+            <h4>📦 Epic: ${tasksData.epic.title}</h4>
+            <p style="color: #0C4A6E; margin: 0.75rem 0;">${tasksData.epic.description}</p>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <span style="background: #BAE6FD; color: #0C4A6E; padding: 0.375rem 0.75rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">
+                    Приоритет: ${tasksData.epic.priority}
+                </span>
+            </div>
+        </div>`;
+    }
+    
+    if (tasksData.user_stories && tasksData.user_stories.length > 0) {
+        html += '<h4 style="color: #2D2D2D; margin: 2rem 0 1rem 0; font-size: 1.1rem;">📖 User Stories:</h4>';
+        tasksData.user_stories.forEach(story => {
+            html += `<div class="user-story-card">
+                <strong style="color: #2D2D2D; display: block; margin-bottom: 0.5rem;">${story.title}</strong>
+                <p style="color: #4A4A4A; margin: 0.5rem 0;">${story.description}</p>
+                <div style="display: flex; gap: 1rem; margin-top: 0.75rem;">
+                    <span style="background: #E5E7EB; color: #374151; padding: 0.25rem 0.625rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
+                        Story Points: ${story.story_points || 'N/A'}
+                    </span>
+                </div>
+            </div>`;
+        });
+    }
+    
+    if (tasksData.tasks && tasksData.tasks.length > 0) {
+        html += '<h4 style="color: #2D2D2D; margin: 2rem 0 1rem 0; font-size: 1.1rem;">✅ Задачи:</h4>';
+        tasksData.tasks.forEach(task => {
+            html += `<div class="task-item">
+                <div>
+                    <strong style="color: #2D2D2D; display: block; margin-bottom: 0.5rem; font-size: 1rem;">${task.title}</strong>
+                    <p style="color: #4A4A4A; margin: 0.5rem 0;">${task.description}</p>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap;">
+                        <span style="background: #F3F4F6; color: #374151; padding: 0.25rem 0.625rem; border-radius: 6px; font-size: 0.85rem;">
+                            ⏱️ ${task.estimated_hours || 'N/A'} ч
+                        </span>
+                        <span style="background: #F3F4F6; color: #374151; padding: 0.25rem 0.625rem; border-radius: 6px; font-size: 0.85rem;">
+                            📊 ${task.complexity || 'N/A'}
+                        </span>
+                    </div>
+                </div>
+            </div>`;
+        });
+    }
+    
+    document.getElementById('tasks-preview').innerHTML = html;
+}
+
+function confirmTasks() {
+    if (!currentTasksData) {
+        alert('Нет задач для подтверждения');
+        return;
+    }
+    
+    fetch('/api/ai-scrum/tasks/confirm', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({tasks_data: currentTasksData, save_to_jira: false})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            alert('Ошибка: ' + data.error);
+            return;
+        }
+        const message = `✅ Задачи сохранены!\n\n` +
+            `📊 Статистика:\n` +
+            `- Всего задач: ${data.result.tasks_count}\n` +
+            `- User Stories: ${data.result.user_stories_count || 0}\n` +
+            `- Epic: ${data.result.epic_id ? 'Да' : 'Нет'}\n\n` +
+            `💾 Сохранено в: data/scrum_tasks.json\n` +
+            `📁 Проект ID: ${currentTasksData?.project_id || 'N/A'}\n\n` +
+        
+        alert(message);
+        
+        // Обновляем список проектов, чтобы показать новые задачи
+        if (currentProjectId) {
+            loadProjects();
+        }
+    })
+    .catch(e => alert('Ошибка: ' + e.message));
+}
+
+// Спринты
+function loadProjectsForSprints() {
+    fetch('/api/ai-scrum/projects')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('sprint-project-select');
+            select.innerHTML = '<option value="">-- Выберите проект --</option>';
+            (data.projects || []).forEach(p => {
+                select.innerHTML += `<option value="${p.project_id}">${p.name}</option>`;
+            });
+        });
+}
+
+function showCreateSprint() {
+    document.getElementById('create-sprint-form').style.display = 'block';
+}
+
+function hideCreateSprint() {
+    document.getElementById('create-sprint-form').style.display = 'none';
+}
+
+function createSprint() {
+    const projectId = document.getElementById('sprint-project-select').value;
+    const name = document.getElementById('sprint-name').value;
+    const start = document.getElementById('sprint-start').value;
+    const end = document.getElementById('sprint-end').value;
+    const goal = document.getElementById('sprint-goal').value;
+    
+    if (!projectId || !name || !start || !end) {
+        alert('Заполните все обязательные поля');
+        return;
+    }
+    
+    fetch('/api/ai-scrum/sprints/create', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({project_id: projectId, name, start_date: start, end_date: end, goal})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            alert('Ошибка: ' + data.error);
+            return;
+        }
+        alert('Спринт создан!');
+        hideCreateSprint();
+        loadSprints();
+    })
+    .catch(e => alert('Ошибка: ' + e.message));
+}
+
+function loadSprints() {
+    document.getElementById('sprints-list').innerHTML = '<p>Список спринтов будет отображаться здесь</p>';
+}
+
+// Встречи
+function loadProjectsForMeetings() {
+    fetch('/api/ai-scrum/projects')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('meeting-project-select');
+            select.innerHTML = '<option value="">-- Выберите проект --</option>';
+            (data.projects || []).forEach(p => {
+                select.innerHTML += `<option value="${p.project_id}">${p.name}</option>`;
+            });
+        });
+}
+
+function analyzeMeeting() {
+    const transcript = document.getElementById('meeting-transcript').value;
+    const meetingType = document.getElementById('meeting-type').value;
+    const projectId = document.getElementById('meeting-project-select').value;
+    const participants = document.getElementById('meeting-participants').value.split(',').map(p => p.trim());
+    
+    if (!transcript || !projectId) {
+        alert('Введите транскрипт и выберите проект');
+        return;
+    }
+    
+    document.getElementById('meeting-result').style.display = 'block';
+    document.getElementById('meeting-analysis').innerHTML = '<div class="spinner"></div>';
+    
+    fetch('/api/ai-scrum/meetings/analyze', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({transcript, meeting_type: meetingType, project_id: projectId, participants})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            document.getElementById('meeting-analysis').innerHTML = '<p>Ошибка: ' + data.error + '</p>';
+            return;
+        }
+        currentMeetingAnalysis = data.analysis;
+        displayMeetingAnalysis(data.analysis);
+        
+        // Показываем сообщение о сохранении
+        if (data.analysis.meeting_id) {
+            const saveMsg = document.createElement('div');
+            saveMsg.className = 'result-box';
+            saveMsg.style.background = '#e8f5e9';
+            saveMsg.style.marginTop = '1rem';
+            saveMsg.innerHTML = `✅ Встреча проанализирована и сохранена! ID: ${data.analysis.meeting_id}<br>💾 Сохранено в: data/scrum_meetings.json`;
+            document.getElementById('meeting-result').appendChild(saveMsg);
+        }
+    })
+    .catch(e => {
+        document.getElementById('meeting-analysis').innerHTML = '<p>Ошибка: ' + e.message + '</p>';
+    });
+}
+
+function displayMeetingAnalysis(analysis) {
+    let html = '<div style="margin-bottom: 2rem;">';
+    html += '<h4 style="color: #8B1E2D; margin-bottom: 0.75rem;">📋 Краткое резюме:</h4>';
+    html += `<div style="background: #F9FAFB; padding: 1rem; border-radius: 8px; border-left: 3px solid #8B1E2D; color: #2D2D2D; line-height: 1.6;">${analysis.meeting_report?.what_was_discussed || 'N/A'}</div>`;
+    html += '</div>';
+    
+    if (analysis.new_tasks && analysis.new_tasks.length > 0) {
+        html += '<div style="margin-bottom: 2rem;">';
+        html += '<h4 style="color: #8B1E2D; margin-bottom: 1rem;">✅ Новые задачи:</h4>';
+        analysis.new_tasks.forEach(task => {
+            html += `<div class="task-item">
+                <div>
+                    <strong style="color: #2D2D2D;">${task.title}</strong>
+                    <p style="color: #6B7280; margin-top: 0.5rem; font-size: 0.9rem;">Исполнитель: ${task.assignee || 'Не назначен'}</p>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+    }
+    
+    if (analysis.problems_identified && analysis.problems_identified.length > 0) {
+        html += '<div style="margin-bottom: 2rem;">';
+        html += '<h4 style="color: #DC2626; margin-bottom: 1rem;">⚠️ Выявленные проблемы:</h4>';
+        analysis.problems_identified.forEach(problem => {
+            const severityColor = problem.severity === 'high' ? '#DC2626' : problem.severity === 'medium' ? '#D97706' : '#F59E0B';
+            html += `<div style="background: #FEF2F2; padding: 1rem; border-radius: 8px; border-left: 3px solid ${severityColor}; margin-bottom: 0.75rem;">
+                <strong style="color: ${severityColor};">${problem.problem}</strong>
+                <span style="background: ${severityColor}; color: white; padding: 0.25rem 0.625rem; border-radius: 6px; font-size: 0.8rem; margin-left: 0.75rem; font-weight: 600;">${problem.severity}</span>
+            </div>`;
+        });
+        html += '</div>';
+    }
+    
+    document.getElementById('meeting-analysis').innerHTML = html;
+}
+
+function generateMeetingReport() {
+    if (!currentMeetingAnalysis) {
+        alert('Сначала проанализируйте встречу');
+        return;
+    }
+    
+    fetch('/api/ai-scrum/meetings/generate-report', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({analysis: currentMeetingAnalysis})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            alert('Ошибка: ' + data.error);
+            return;
+        }
+        document.getElementById('meeting-report').style.display = 'block';
+        document.getElementById('meeting-report').innerHTML = '<pre style="white-space: pre-wrap;">' + data.report + '</pre>';
+    })
+    .catch(e => alert('Ошибка: ' + e.message));
+}
+
+function loadMeetings() {
+    const projectId = document.getElementById('meeting-project-select').value;
+    const url = projectId ? `/api/ai-scrum/meetings?project_id=${projectId}` : '/api/ai-scrum/meetings';
+    
+    document.getElementById('meetings-history').style.display = 'block';
+    document.getElementById('meetings-list').innerHTML = '<div class="spinner"></div>';
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('meetings-list').innerHTML = '<p>Ошибка: ' + data.error + '</p>';
+                return;
+            }
+            displayMeetingsHistory(data.meetings || []);
+        })
+        .catch(e => {
+            document.getElementById('meetings-list').innerHTML = '<p>Ошибка: ' + e.message + '</p>';
+        });
+}
+
+function displayMeetingsHistory(meetings) {
+    if (!meetings || meetings.length === 0) {
+        document.getElementById('meetings-list').innerHTML = '<p>Нет сохранённых встреч</p>';
+        return;
+    }
+    
+    let html = '';
+    meetings.forEach(meeting => {
+        const summary = meeting.meeting_summary || {};
+        html += `<div class="sprint-item">
+            <h4>${summary.type || 'Встреча'} - ${new Date(summary.date || meeting.analyzed_at).toLocaleDateString('ru-RU')}</h4>
+            <p><strong>Участники:</strong> ${(summary.participants || []).join(', ') || 'N/A'}</p>
+            <p><strong>Проект:</strong> ${meeting.project_id || 'N/A'}</p>
+            ${meeting.new_tasks && meeting.new_tasks.length > 0 ? `<p><strong>Новых задач:</strong> ${meeting.new_tasks.length}</p>` : ''}
+            <button class="btn btn-secondary" onclick="viewMeetingDetails('${meeting.meeting_id || ''}')">Подробнее</button>
+        </div>`;
+    });
+    
+    document.getElementById('meetings-list').innerHTML = html;
+}
+
+function viewMeetingDetails(meetingId) {
+    fetch('/api/ai-scrum/meetings')
+        .then(r => r.json())
+        .then(data => {
+            const meeting = (data.meetings || []).find(m => m.meeting_id === meetingId);
+            if (meeting) {
+                currentMeetingAnalysis = meeting;
+                displayMeetingAnalysis(meeting);
+                document.getElementById('meeting-result').style.display = 'block';
+                document.getElementById('meetings-history').style.display = 'none';
+            } else {
+                alert('Встреча не найдена');
+            }
+        })
+        .catch(e => alert('Ошибка: ' + e.message));
+}
+
+// Дедлайны
+function checkDeadlines() {
+    fetch('/api/ai-scrum/deadlines/check?days_ahead=7')
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('deadlines-result').innerHTML = '<p>Ошибка: ' + data.error + '</p>';
+                return;
+            }
+            displayDeadlines(data.result);
+        })
+        .catch(e => {
+            document.getElementById('deadlines-result').innerHTML = '<p>Ошибка: ' + e.message + '</p>';
+        });
+}
+
+function displayDeadlines(result) {
+    let html = '';
+    
+    if (result.upcoming && result.upcoming.length > 0) {
+        html += '<h4>📅 Ближайшие дедлайны (7 дней):</h4>';
+        result.upcoming.forEach(dl => {
+            const daysLeft = Math.ceil((new Date(dl.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+            html += `<div class="task-list-item" style="border-left-color: ${daysLeft <= 2 ? '#f44336' : '#ff9800'};">
+                <div>
+                    <strong>${dl.task_id}</strong>
+                    <p>Исполнитель: ${dl.assignee || 'Не назначен'}</p>
+                    <p>Приоритет: ${dl.priority || 'medium'}</p>
+                </div>
+                <div>
+                    <p><strong>${new Date(dl.deadline).toLocaleDateString('ru-RU')}</strong></p>
+                    <p>Осталось дней: ${daysLeft}</p>
+                </div>
+            </div>`;
+        });
+    } else {
+        html += '<p>✅ Нет ближайших дедлайнов</p>';
+    }
+    
+    if (result.overdue && result.overdue.length > 0) {
+        html += '<h4 style="color: #d32f2f;">⚠️ Просроченные дедлайны:</h4>';
+        result.overdue.forEach(dl => {
+            const daysOverdue = Math.ceil((new Date() - new Date(dl.deadline)) / (1000 * 60 * 60 * 24));
+            html += `<div class="task-list-item" style="border-left-color: #d32f2f; background: #ffebee;">
+                <div>
+                    <strong style="color: #d32f2f;">${dl.task_id}</strong>
+                    <p>Исполнитель: ${dl.assignee || 'Не назначен'}</p>
+                    <p>Приоритет: ${dl.priority || 'medium'}</p>
+                </div>
+                <div>
+                    <p style="color: #d32f2f;"><strong>${new Date(dl.deadline).toLocaleDateString('ru-RU')}</strong></p>
+                    <p style="color: #d32f2f;">Просрочено на: ${daysOverdue} дней</p>
+                </div>
+            </div>`;
+        });
+    }
+    
+    if (result.at_risk && result.at_risk.length > 0) {
+        html += '<h4 style="color: #ff9800;">⚠️ В зоне риска:</h4>';
+        result.at_risk.forEach(dl => {
+            html += `<div class="task-list-item" style="border-left-color: #ff9800;">
+                <div>
+                    <strong>${dl.task_id}</strong>
+                    <p>Исполнитель: ${dl.assignee || 'Не назначен'}</p>
+                </div>
+                <div>
+                    <p><strong>${new Date(dl.deadline).toLocaleDateString('ru-RU')}</strong></p>
+                    <p style="color: #ff9800;">Высокий риск срыва</p>
+                </div>
+            </div>`;
+        });
+    }
+    
+    if (!result.upcoming || result.upcoming.length === 0) {
+        if (!result.overdue || result.overdue.length === 0) {
+            html += '<p>Нет активных дедлайнов. Добавьте дедлайны для задач.</p>';
+        }
+    }
+    
+    document.getElementById('deadlines-result').innerHTML = html;
+}
+
+function getReminders() {
+    fetch('/api/ai-scrum/deadlines/reminders')
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('deadlines-result').innerHTML = '<p>Ошибка: ' + data.error + '</p>';
+                return;
+            }
+            let html = '<h4>🔔 Напоминания:</h4>';
+            if (data.reminders && data.reminders.length > 0) {
+                data.reminders.forEach(reminder => {
+                    const dl = reminder.deadline_info;
+                    html += `<div class="task-list-item">
+                        <div>
+                            <strong>${dl.task_id}</strong>
+                            <p>Исполнитель: ${dl.assignee || 'Не назначен'}</p>
+                        </div>
+                        <div>
+                            <p><strong>${new Date(dl.deadline).toLocaleDateString('ru-RU')}</strong></p>
+                            <p>Осталось дней: ${reminder.days_left}</p>
+                            <span class="status-badge ${reminder.urgency === 'high' ? 'status-blocked' : 'status-active'}">${reminder.urgency}</span>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                html += '<p>Нет активных напоминаний</p>';
+            }
+            document.getElementById('deadlines-result').innerHTML = html;
+        })
+        .catch(e => {
+            document.getElementById('deadlines-result').innerHTML = '<p>Ошибка: ' + e.message + '</p>';
+        });
+}
+
+function analyzeDeadlineRisks() {
+    const projectId = prompt('Введите ID проекта (или оставьте пустым для всех проектов):');
+    const url = projectId ? `/api/ai-scrum/deadlines/risks?project_id=${projectId}` : '/api/ai-scrum/deadlines/risks';
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('deadlines-result').innerHTML = '<p>Ошибка: ' + data.error + '</p>';
+                return;
+            }
+            let html = '<h4>⚠️ Анализ рисков дедлайнов:</h4>';
+            html += `<p><strong>Всего рисков:</strong> ${data.risks.total_risks || 0}</p>`;
+            
+            if (data.risks.risks && data.risks.risks.length > 0) {
+                data.risks.risks.forEach(risk => {
+                    const severityColor = risk.severity === 'critical' ? '#d32f2f' : risk.severity === 'high' ? '#f57c00' : '#ff9800';
+                    html += `<div class="task-list-item" style="border-left-color: ${severityColor};">
+                        <div>
+                            <strong>${risk.task_id}</strong>
+                            <p>Серьёзность: <span style="color: ${severityColor};">${risk.severity}</span></p>
+                            ${risk.days_left !== undefined ? `<p>Осталось дней: ${risk.days_left}</p>` : ''}
+                            ${risk.days_overdue !== undefined ? `<p style="color: #d32f2f;">Просрочено на: ${risk.days_overdue} дней</p>` : ''}
+                        </div>
+                        <div>
+                            <p>Влияние: ${risk.impact}</p>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                html += '<p>✅ Рисков не выявлено</p>';
+            }
+            document.getElementById('deadlines-result').innerHTML = html;
+        })
+        .catch(e => {
+            document.getElementById('deadlines-result').innerHTML = '<p>Ошибка: ' + e.message + '</p>';
+        });
+}
+
+function showAddDeadline() {
+    document.getElementById('add-deadline-form').style.display = 'block';
+    loadProjectsForDeadlines();
+}
+
+function hideAddDeadline() {
+    document.getElementById('add-deadline-form').style.display = 'none';
+}
+
+function loadProjectsForDeadlines() {
+    fetch('/api/ai-scrum/projects')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('deadline-project-select');
+            select.innerHTML = '<option value="">-- Выберите проект --</option>';
+            (data.projects || []).forEach(p => {
+                select.innerHTML += `<option value="${p.project_id}">${p.name}</option>`;
+            });
+        });
+}
+
+function addDeadline() {
+    const projectId = document.getElementById('deadline-project-select').value;
+    const taskId = document.getElementById('deadline-task-id').value;
+    const assignee = document.getElementById('deadline-assignee').value;
+    const deadline = document.getElementById('deadline-date').value;
+    const priority = document.getElementById('deadline-priority').value;
+    
+    if (!projectId || !taskId || !deadline) {
+        alert('Заполните все обязательные поля');
+        return;
+    }
+    
+    fetch('/api/ai-scrum/deadlines/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            task_id: taskId,
+            deadline: deadline,
+            assignee: assignee || null,
+            project_id: projectId,
+            priority: priority
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            alert('Ошибка: ' + data.error);
+            return;
+        }
+        alert('✅ Дедлайн добавлен!');
+        hideAddDeadline();
+        checkDeadlines();
+    })
+    .catch(e => alert('Ошибка: ' + e.message));
+}
+
+// Аналитика
+function loadProjectsForAnalytics() {
+    fetch('/api/ai-scrum/projects')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('analytics-project-select');
+            select.innerHTML = '<option value="">-- Выберите проект --</option>';
+            (data.projects || []).forEach(p => {
+                select.innerHTML += `<option value="${p.project_id}">${p.name}</option>`;
+            });
+        });
+}
+
+function generateInsights() {
+    const projectId = document.getElementById('analytics-project-select').value;
+    if (!projectId) {
+        alert('Выберите проект');
+        return;
+    }
+    
+    document.getElementById('analytics-result').innerHTML = '<div class="spinner"></div>';
+    
+    fetch('/api/ai-scrum/analytics/insights', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({project_id: projectId, data: {}})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            document.getElementById('analytics-result').innerHTML = '<p>Ошибка: ' + data.error + '</p>';
+            return;
+        }
+        displayInsights(data.insights);
+    })
+    .catch(e => {
+        document.getElementById('analytics-result').innerHTML = '<p>Ошибка: ' + e.message + '</p>';
+    });
+}
+
+function displayInsights(insights) {
+    let html = '<div class="project-detail-section">';
+    html += '<h3>🧠 AI-инсайты и аналитика</h3>';
+    
+    if (insights.efficiency_analysis) {
+        const score = insights.efficiency_analysis.efficiency_score || 0;
+        const scoreColor = score >= 80 ? '#4caf50' : score >= 60 ? '#ff9800' : '#f44336';
+        html += `<div class="stat-card" style="max-width: 300px; margin: 1rem 0;">
+            <div class="stat-value" style="color: ${scoreColor};">${score}</div>
+            <div class="stat-label">Оценка эффективности</div>
+        </div>`;
+        html += `<p><strong>Процент выполнения:</strong> ${insights.efficiency_analysis.completion_rate || 0}%</p>`;
+        html += `<p><strong>Тренд velocity:</strong> ${insights.efficiency_analysis.velocity_trend || 'stable'}</p>`;
+    }
+    
+    if (insights.problem_areas && insights.problem_areas.length > 0) {
+        html += '<h4>⚠️ Проблемные зоны:</h4>';
+        insights.problem_areas.forEach(area => {
+            const severityColor = area.severity === 'high' ? '#d32f2f' : area.severity === 'medium' ? '#ff9800' : '#ffc107';
+            html += `<div class="task-list-item" style="border-left-color: ${severityColor};">
+                <div>
+                    <strong>${area.area}</strong>
+                    <p>${area.description}</p>
+                    <p><small>Влияние: ${area.impact}</small></p>
+                </div>
+                <div>
+                    <span class="status-badge" style="background: ${severityColor}; color: white;">${area.severity}</span>
+                </div>
+            </div>`;
+            if (area.recommendations && area.recommendations.length > 0) {
+                html += '<ul style="margin-left: 2rem;">';
+                area.recommendations.forEach(rec => {
+                    html += `<li>${rec}</li>`;
+                });
+                html += '</ul>';
+            }
+        });
+    }
+    
+    if (insights.hidden_risks && insights.hidden_risks.length > 0) {
+        html += '<h4>🔍 Скрытые риски:</h4>';
+        insights.hidden_risks.forEach(risk => {
+            html += `<div class="task-list-item" style="border-left-color: #9c27b0;">
+                <div>
+                    <strong>${risk.risk}</strong>
+                    <p>Вероятность: ${risk.probability} | Влияние: ${risk.impact}</p>
+                    <p><small>${risk.mitigation}</small></p>
+                </div>
+            </div>`;
+        });
+    }
+    
+    if (insights.team_insights) {
+        html += '<h4>👥 Инсайты команды:</h4>';
+        if (insights.team_insights.high_performers && insights.team_insights.high_performers.length > 0) {
+            html += `<p><strong>Высокая производительность:</strong> ${insights.team_insights.high_performers.join(', ')}</p>`;
+        }
+        if (insights.team_insights.overloaded_members && insights.team_insights.overloaded_members.length > 0) {
+            html += `<p style="color: #f44336;"><strong>Перегружены:</strong> ${insights.team_insights.overloaded_members.join(', ')}</p>`;
+        }
+        if (insights.team_insights.bottlenecks && insights.team_insights.bottlenecks.length > 0) {
+            html += `<p><strong>Узкие места:</strong> ${insights.team_insights.bottlenecks.join(', ')}</p>`;
+        }
+    }
+    
+    if (insights.recommendations && insights.recommendations.length > 0) {
+        html += '<h4>💡 Рекомендации:</h4><ul>';
+        insights.recommendations.forEach(rec => {
+            const recText = typeof rec === 'string' ? rec : rec.recommendation || '';
+            const priority = typeof rec === 'object' ? rec.priority || 'medium' : 'medium';
+            html += `<li><strong>[${priority}]</strong> ${recText}</li>`;
+        });
+        html += '</ul>';
+    }
+    
+    if (insights.improvement_suggestions && insights.improvement_suggestions.length > 0) {
+        html += '<h4>🚀 Предложения по улучшению:</h4><ul>';
+        insights.improvement_suggestions.forEach(suggestion => {
+            html += `<li>${suggestion}</li>`;
+        });
+        html += '</ul>';
+    }
+    
+    html += '</div>';
+    document.getElementById('analytics-result').innerHTML = html;
+}
+
+// ==================== Интеграции (Jira и Teams удалены) ====================
+
+// ==================== Google Meet интеграция ====================
+
+function loadGoogleMeetSettings() {
+    fetch('/api/ai-scrum/integrations/google-meet/settings')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.settings) {
+                const settings = data.settings;
+                document.getElementById('google-meet-client-id').value = settings.client_id || '';
+                document.getElementById('google-meet-redirect-uri').value = settings.redirect_uri || '';
+                
+                if (settings.has_secret) {
+                    document.getElementById('google-meet-client-secret').placeholder = 'Secret сохранён (введите новый для изменения)';
+                }
+                
+                updateGoogleMeetStatusBadge(settings.connected, settings.enabled);
+                
+                // Показываем предупреждение, если библиотеки не установлены
+                if (data.libraries_available === false) {
+                    const warningDiv = document.getElementById('google-meet-libraries-warning');
+                    if (warningDiv) {
+                        warningDiv.style.display = 'block';
+                    }
+                }
+            }
+        })
+        .catch(e => console.error('Ошибка загрузки настроек Google Meet:', e));
+}
+
+function updateGoogleMeetStatusBadge(connected, enabled) {
+    const badge = document.getElementById('google-meet-status-badge');
+    if (connected && enabled) {
+        badge.className = 'status-badge success';
+        badge.innerHTML = '<span>✅</span><span>Подключено</span>';
+    } else if (enabled) {
+        badge.className = 'status-badge warning';
+        badge.innerHTML = '<span>⚠️</span><span>Не подключено</span>';
+    } else {
+        badge.className = 'status-badge';
+        badge.innerHTML = '<span>⚪</span><span>Не настроено</span>';
+    }
+}
+
+function testGoogleMeetConnection() {
+    const testBtn = document.getElementById('google-meet-test-btn');
+    const resultDiv = document.getElementById('google-meet-test-result');
+    
+    const clientId = document.getElementById('google-meet-client-id').value.trim();
+    const clientSecret = document.getElementById('google-meet-client-secret').value.trim();
+    const redirectUri = document.getElementById('google-meet-redirect-uri').value.trim();
+    
+    if (!clientId || !clientSecret || !redirectUri) {
+        resultDiv.innerHTML = '<div style="padding: 1rem; background: #FEE2E2; color: #991B1B; border-radius: 8px; margin-top: 1rem;">⚠️ Заполните все обязательные поля</div>';
+        return;
+    }
+    
+    testBtn.disabled = true;
+    testBtn.innerHTML = '<span>⏳</span><span>Тестирование...</span>';
+    resultDiv.innerHTML = '<div style="padding: 1rem; background: #FEF3C7; color: #92400E; border-radius: 8px; margin-top: 1rem;">⏳ Проверка подключения к Google Meet...</div>';
+    
+    fetch('/api/ai-scrum/integrations/google-meet/test', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            client_id: clientId,
+            client_secret: clientSecret,
+            redirect_uri: redirectUri
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        testBtn.disabled = false;
+        testBtn.innerHTML = '<span>🔍</span><span>Тестировать подключение</span>';
+        
+        if (data.success) {
+            let html = '<div style="padding: 1rem; background: #D1FAE5; color: #065F46; border-radius: 8px; margin-top: 1rem;">';
+            html += '<strong>✅ Подключение успешно!</strong><br>';
+            if (data.message) {
+                html += `<p style="margin: 0.5rem 0 0 0;">${data.message}</p>`;
+            }
+            html += '</div>';
+            resultDiv.innerHTML = html;
+            updateGoogleMeetStatusBadge(true, true);
+        } else {
+            let html = '<div style="padding: 1rem; background: #FEE2E2; color: #991B1B; border-radius: 8px; margin-top: 1rem;">';
+            html += '<strong>❌ Ошибка подключения</strong><br>';
+            html += `<p style="margin: 0.5rem 0 0 0;">${data.error || 'Неизвестная ошибка'}</p>`;
+            if (data.auth_required) {
+                html += '<p style="margin: 0.5rem 0 0 0;"><strong>💡 Решение:</strong> Нажмите кнопку "Авторизоваться" выше для выполнения OAuth авторизации.</p>';
+            }
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+    })
+    .catch(e => {
+        testBtn.disabled = false;
+        testBtn.innerHTML = '<span>🔍</span><span>Тестировать подключение</span>';
+        resultDiv.innerHTML = `<div style="padding: 1rem; background: #FEE2E2; color: #991B1B; border-radius: 8px; margin-top: 1rem;">❌ Ошибка: ${e.message}</div>`;
+    });
+}
+
+function saveGoogleMeetSettings() {
+    const saveBtn = document.getElementById('google-meet-save-btn');
+    const resultDiv = document.getElementById('google-meet-test-result');
+    
+    const clientId = document.getElementById('google-meet-client-id').value.trim();
+    const clientSecret = document.getElementById('google-meet-client-secret').value.trim();
+    const redirectUri = document.getElementById('google-meet-redirect-uri').value.trim();
+    
+    if (!clientId || !clientSecret || !redirectUri) {
+        resultDiv.innerHTML = '<div style="padding: 1rem; background: #FEE2E2; color: #991B1B; border-radius: 8px; margin-top: 1rem;">⚠️ Заполните все поля</div>';
+        return;
+    }
+    
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span>⏳</span><span>Сохранение...</span>';
+    
+    fetch('/api/ai-scrum/integrations/google-meet/settings', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            client_id: clientId,
+            client_secret: clientSecret,
+            redirect_uri: redirectUri,
+            enabled: true
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<span>💾</span><span>Сохранить настройки</span>';
+        
+        if (data.success) {
+            let html = '<div style="padding: 1rem; background: #D1FAE5; color: #065F46; border-radius: 8px; margin-top: 1rem;">';
+            html += '<strong>✅ Настройки сохранены!</strong><br>';
+            if (data.connected) {
+                html += '<p style="margin: 0.5rem 0 0 0;">Подключение к Google Meet установлено.</p>';
+                updateGoogleMeetStatusBadge(true, true);
+            } else {
+                html += '<p style="margin: 0.5rem 0 0 0;">⚠️ Настройки сохранены. Выполните OAuth авторизацию для полного подключения.</p>';
+                updateGoogleMeetStatusBadge(false, true);
+            }
+            html += '</div>';
+            resultDiv.innerHTML = html;
+            
+            document.getElementById('google-meet-client-secret').value = '';
+            document.getElementById('google-meet-client-secret').placeholder = 'Secret сохранён (введите новый для изменения)';
+        } else {
+            let html = '<div style="padding: 1rem; background: #FEE2E2; color: #991B1B; border-radius: 8px; margin-top: 1rem;">';
+            html += '<strong>❌ Ошибка сохранения</strong><br>';
+            html += `<p style="margin: 0.5rem 0 0 0;">${data.error || 'Неизвестная ошибка'}</p>`;
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+    })
+    .catch(e => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<span>💾</span><span>Сохранить настройки</span>';
+        resultDiv.innerHTML = `<div style="padding: 1rem; background: #FEE2E2; color: #991B1B; border-radius: 8px; margin-top: 1rem;">❌ Ошибка: ${e.message}</div>`;
+    });
+}
+
+function authorizeGoogleMeet() {
+    const authBtn = document.getElementById('google-meet-authorize-btn');
+    const resultDiv = document.getElementById('google-meet-test-result');
+    
+    const clientId = document.getElementById('google-meet-client-id').value.trim();
+    const clientSecret = document.getElementById('google-meet-client-secret').value.trim();
+    
+    // Проверяем, что настройки сохранены
+    if (!clientId) {
+        resultDiv.innerHTML = '<div style="padding: 1rem; background: #FEE2E2; color: #991B1B; border-radius: 8px; margin-top: 1rem;">⚠️ Сначала сохраните настройки (Client ID и Client Secret)</div>';
+        return;
+    }
+    
+    authBtn.disabled = true;
+    authBtn.innerHTML = '<span>⏳</span><span>Получение URL...</span>';
+    resultDiv.innerHTML = '<div style="padding: 1rem; background: #FEF3C7; color: #92400E; border-radius: 8px; margin-top: 1rem;">⏳ Получение URL для авторизации...</div>';
+    
+    fetch('/api/ai-scrum/integrations/google-meet/authorize', {
+        method: 'GET',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        authBtn.disabled = false;
+        authBtn.innerHTML = '<span>🔐</span><span>Авторизоваться</span>';
+        
+        if (data.success && data.authorization_url) {
+            // Открываем URL авторизации в новом окне
+            const authWindow = window.open(
+                data.authorization_url,
+                'Google OAuth Authorization',
+                'width=600,height=700,scrollbars=yes,resizable=yes'
+            );
+            
+            // Проверяем, было ли окно заблокировано
+            if (!authWindow) {
+                resultDiv.innerHTML = '<div style="padding: 1rem; background: #FEE2E2; color: #991B1B; border-radius: 8px; margin-top: 1rem;">❌ Окно авторизации заблокировано. Разрешите всплывающие окна и попробуйте снова.</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div style="padding: 1rem; background: #D1FAE5; color: #065F46; border-radius: 8px; margin-top: 1rem;"><strong>✅ Окно авторизации открыто</strong><br><p style="margin: 0.5rem 0 0 0;">Выполните авторизацию в открывшемся окне. После успешной авторизации окно закроется автоматически.</p></div>';
+            
+            // Периодически проверяем, закрыто ли окно (простая проверка)
+            const checkClosed = setInterval(() => {
+                if (authWindow.closed) {
+                    clearInterval(checkClosed);
+                    // После закрытия окна можно проверить статус авторизации
+                    setTimeout(() => {
+                        testGoogleMeetConnection();
+                    }, 1000);
+                }
+            }, 500);
+        } else {
+            let html = '<div style="padding: 1rem; background: #FEE2E2; color: #991B1B; border-radius: 8px; margin-top: 1rem;">';
+            html += '<strong>❌ Ошибка получения URL авторизации</strong><br>';
+            html += `<p style="margin: 0.5rem 0 0 0;">${data.error || 'Неизвестная ошибка'}</p>`;
+            html += '</div>';
+            resultDiv.innerHTML = html;
+        }
+    })
+    .catch(e => {
+        authBtn.disabled = false;
+        authBtn.innerHTML = '<span>🔐</span><span>Авторизоваться</span>';
+        resultDiv.innerHTML = `<div style="padding: 1rem; background: #FEE2E2; color: #991B1B; border-radius: 8px; margin-top: 1rem;">❌ Ошибка: ${e.message}</div>`;
+    });
+}
+
+// ==================== Microsoft Teams интеграция удалена ====================
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    loadProjects();
+    loadProjectsForTasks();
+});
+</script>
+{% endblock %}

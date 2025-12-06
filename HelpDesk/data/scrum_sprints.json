@@ -1,0 +1,15 @@
+[
+  {
+    "sprint_id": "SPRINT-20251128020138",
+    "project_id": "PROJ-20251128014105",
+    "name": "Анализ проекта",
+    "start_date": "2025-11-28",
+    "end_date": "2025-11-29",
+    "goal": "оперделить задачи",
+    "status": "planned",
+    "tasks": [],
+    "velocity": 0,
+    "burndown_data": [],
+    "created_at": "2025-11-28T02:01:38.874798"
+  }
+]
